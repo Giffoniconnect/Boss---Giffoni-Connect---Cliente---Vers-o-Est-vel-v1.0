@@ -1,11 +1,7 @@
-<div align="center">
+# Portal BOSS - Giffoni Connect Cliente
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+Este projeto é uma aplicação full-stack para gerenciamento de clientes e fluxos de produção jurídica, integrado ao ecossistema BOSS.
 
-  <h1>Built with AI Studio</h2>
+## Regra de Engenharia
 
-  <p>The fastest path from prompt to production with Gemini.</p>
-
-  <a href="https://aistudio.google.com/apps">Start building</a>
-
-</div>
+Antes de qualquer alteração técnica, consultar obrigatoriamente o repositório atual e o arquivo `docs/REGRA-OBRIGATORIA-CONSULTA-GITHUB.md`.

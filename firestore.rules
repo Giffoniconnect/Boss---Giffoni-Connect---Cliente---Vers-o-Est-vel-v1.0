@@ -1,0 +1,367 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // -------------------------------------------------------------------------
+    // GLOBAL HELPERS
+    // -------------------------------------------------------------------------
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+    
+    function isAdmin() {
+      // Primary admin email always has access if signed in.
+      // We check for case-insensitive email matching and staff roles.
+      return isSignedIn() && (
+        ('email' in request.auth.token && request.auth.token.email.matches('(?i)^direito\\.rgr@gmail\\.com$')) ||
+        !exists(/databases/$(database)/documents/users/$(request.auth.uid)) ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') in ['boss_admin', 'admin', 'partner', 'outsourced']
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // -------------------------------------------------------------------------
+    // CATCH-ALL DENY
+    // -------------------------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // USERS AND INVITES
+    // -------------------------------------------------------------------------
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin() || resource.data.email == request.auth.token.email);
+      allow write: if isAdmin() || (isSignedIn() && request.auth.uid == userId && (
+        // Allow self-registration if document doesn't exist, or updating self profile if role is not escalated
+        !exists(/databases/$(database)/documents/users/$(userId)) ||
+        request.resource.data.role == resource.data.role
+      ));
+    }
+
+    match /users_invites/{inviteId} {
+      allow read: if isAdmin() || (isSignedIn() && request.auth.token.email == resource.data.email);
+      allow write: if isAdmin();
+    }
+
+    // -------------------------------------------------------------------------
+    // CLIENT PORTALS (SLUG MAPPING)
+    // -------------------------------------------------------------------------
+    match /clientPortals/{slug} {
+      allow read: if true; // Publicly readable to find the clientID by slug
+      allow write: if isAdmin();
+    }
+
+    // -------------------------------------------------------------------------
+    // CLIENTS COLLECTION
+    // -------------------------------------------------------------------------
+    match /clients/{clientId} {
+      function isOwnClient() {
+        return isSignedIn() && (
+               !exists(/databases/$(database)/documents/users/$(request.auth.uid)) ||
+               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.clientId == clientId);
+      }
+
+      allow read: if isAdmin() || isOwnClient();
+      allow write: if isAdmin();
+    }
+
+    // -------------------------------------------------------------------------
+    // CASES COLLECTION
+    // -------------------------------------------------------------------------
+    match /cases/{caseId} {
+      function isValidCase(data) {
+        return data.keys().hasAll(['clientId', 'title', 'status']) &&
+               data.clientId is string &&
+               data.title is string && data.title.size() <= 200 &&
+               data.status is string;
+      }
+
+      function belongsToUser() {
+        return isSignedIn() && (
+          isAdmin() || 
+          !exists(/databases/$(database)/documents/users/$(request.auth.uid)) || 
+          resource == null || (
+            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'client' &&
+            resource.data.get('clientId', '') == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('clientId', '')
+          )
+        );
+      }
+
+      allow read: if isAdmin() || belongsToUser();
+      allow create: if isAdmin() && isValidCase(request.resource.data);
+      allow update: if isAdmin() || 
+                     (belongsToUser() && request.resource.data.get('clientId', '') == resource.data.get('clientId', ''));
+      allow delete: if isAdmin();
+    }
+
+    match /cases/{caseId}/generatedDocuments/{docId} {
+      allow read, write: if isAdmin() || canAccessCase(caseId);
+    }
+
+    // -------------------------------------------------------------------------
+    // CASE SUB-RESOURCES (Events, Docs, Financial, Comms)
+    // -------------------------------------------------------------------------
+    
+    function canAccessCase(caseId) {
+      return isSignedIn() && (
+        isAdmin() || (
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          exists(/databases/$(database)/documents/cases/$(caseId)) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'client' &&
+          get(/databases/$(database)/documents/cases/$(caseId)).data.clientId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.clientId
+        )
+      );
+    }
+
+    function isVisibleToClient(data) {
+      return data.get('visibleToClient', false) == true;
+    }
+
+    match /caseEvents/{eventId} {
+      allow read: if isAdmin() || (isSignedIn() && canAccessCase(resource.data.caseId) && isVisibleToClient(resource.data));
+      allow write: if isAdmin();
+    }
+
+    match /casePendingTasks/{taskId} {
+      allow read: if isAdmin() || (isSignedIn() && canAccessCase(resource.data.caseId) && isVisibleToClient(resource.data));
+      allow write: if isAdmin();
+    }
+
+    match /caseExplanations/{explId} {
+      allow read: if isAdmin() || (isSignedIn() && canAccessCase(resource.data.caseId) && isVisibleToClient(resource.data));
+      allow write: if isAdmin();
+    }
+
+    match /caseDocuments/{docId} {
+      allow read: if isAdmin() || (isSignedIn() && canAccessCase(resource.data.caseId) && isVisibleToClient(resource.data));
+      allow write: if isAdmin();
+    }
+
+    match /caseFinancials/{finId} {
+      allow read: if isAdmin() || resource.data.get('visibleToClient', false) == true || (isSignedIn() && canAccessCase(resource.data.caseId) && isVisibleToClient(resource.data));
+      allow write: if isAdmin();
+    }
+
+    match /caseCommunications/{commId} {
+      allow read: if isAdmin() || (isSignedIn() && canAccessCase(resource.data.caseId) && isVisibleToClient(resource.data));
+      allow create: if isSignedIn() && (isAdmin() || (canAccessCase(request.resource.data.caseId) && request.resource.data.clientId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.clientId));
+      allow update, delete: if isAdmin();
+    }
+
+    // -------------------------------------------------------------------------
+    // CASE INFORMATION REQUESTS
+    // -------------------------------------------------------------------------
+    match /caseInformationRequests/{requestId} {
+      function canAccessRequest(data) {
+        return isSignedIn() && (
+          isAdmin() || (
+            exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'client' &&
+            data.clientId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.clientId &&
+            data.get('visibleToClient', false) == true
+          )
+        );
+      }
+
+      allow read: if isAdmin() || resource.data.get('visibleToClient', false) == true || (isSignedIn() && canAccessRequest(resource.data));
+      allow create: if isAdmin();
+      allow update: if (isAdmin()) || (isSignedIn() && canAccessRequest(resource.data) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['answer', 'status', 'updatedAt']));
+      allow delete: if isAdmin();
+    }
+
+    // -------------------------------------------------------------------------
+    // CASE EVIDENCE REQUESTS
+    // -------------------------------------------------------------------------
+    match /caseEvidenceRequests/{requestId} {
+      function canAccessEvidenceRequest(data) {
+        return isSignedIn() && (
+          isAdmin() || (
+            exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'client' &&
+            data.clientId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.clientId &&
+            data.get('visibleToClient', false) == true
+          )
+        );
+      }
+
+      allow read: if isAdmin() || resource.data.get('visibleToClient', false) == true || (isSignedIn() && canAccessEvidenceRequest(resource.data));
+      allow create: if isAdmin();
+      allow update: if (isAdmin()) || (isSignedIn() && canAccessEvidenceRequest(resource.data) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['files', 'status', 'updatedAt']));
+      allow delete: if isAdmin();
+    }
+
+    // -------------------------------------------------------------------------
+    // CASE TIMELINE COLLECTION
+    // -------------------------------------------------------------------------
+    match /caseTimeline/{timelineId} {
+      allow read: if isAdmin() || resource.data.get('publicVisible', false) == true;
+      allow write: if isAdmin();
+    }
+
+    // -------------------------------------------------------------------------
+    // OPERATIONAL TASKS COLLECTION
+    // -------------------------------------------------------------------------
+    match /operationalTasks/{taskId} {
+      allow read, write: if isAdmin();
+    }
+
+    // -------------------------------------------------------------------------
+    // SETTINGS COLLECTION
+    // -------------------------------------------------------------------------
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin() && (settingId != 'portal' || (
+        request.resource.data.keys().hasAll(['link']) &&
+        request.resource.data.link is string &&
+        request.resource.data.link.size() <= 2048
+      ));
+    }
+
+    // -------------------------------------------------------------------------
+    // MASTER EDITOR LOGS COLLECTION
+    // -------------------------------------------------------------------------
+    match /masterEditorLogs/{logId} {
+      allow read, write: if isAdmin();
+    }
+
+    // -------------------------------------------------------------------------
+    // CREDENCIAIS CLIENTE COLLECTION (PORTAL CLIENT AUTHENTICATION)
+    // -------------------------------------------------------------------------
+    match /credenciaisCliente/{credId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // -------------------------------------------------------------------------
+    // CLIENTES COLLECTION (CLIENT PORTAL READ COMPATIBILITY)
+    // -------------------------------------------------------------------------
+    match /clientes/{clientId} {
+      allow read: if resource.data.get('portalAtivo', false) == true
+        || resource.data.get('status', '') == 'active'
+        || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // Compatibility rule specifically for clientes/id/{clientId} paths
+    match /clientes/id/{clientId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // -------------------------------------------------------------------------
+    // CASOS COLLECTION (CASE READ COMPATIBILITY)
+    // -------------------------------------------------------------------------
+    match /casos/{casoId} {
+      allow read: if resource.data.get('visivelParaCliente', false) == true
+        || resource.data.get('visibleToClient', false) == true
+        || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // -------------------------------------------------------------------------
+    // AUDIENCIAS, PERICIAS, REUNIOES COLLECTIONS (CLIENT PORTAL READS)
+    // -------------------------------------------------------------------------
+    match /audiencias/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /pericias/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /reunioes/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // -------------------------------------------------------------------------
+    // GOOGLE DRIVE JOBS QUEUE
+    // -------------------------------------------------------------------------
+    match /googleDriveJobs/{jobId} {
+      allow read, write: if isSignedIn();
+    }
+
+    // -------------------------------------------------------------------------
+    // GOOGLE DOCS JOBS QUEUE
+    // -------------------------------------------------------------------------
+    match /googleDocsJobs/{jobId} {
+      allow read, write: if isSignedIn();
+    }
+
+    // -------------------------------------------------------------------------
+    // MARKETING LEADS COLLECTION
+    // -------------------------------------------------------------------------
+    match /marketingLeads/{leadId} {
+      allow read, write: if isAdmin();
+    }
+
+    // -------------------------------------------------------------------------
+    // MARKETING LEADS DELETED COLLECTION (Repositório de Excluídos)
+    // -------------------------------------------------------------------------
+    match /marketingLeadsDeleted/{leadId} {
+      allow read, write: if isAdmin();
+    }
+
+    // -------------------------------------------------------------------------
+    // LEADS MEETINGS COLLECTION (Agendamentos Comerciais de Leads)
+    // -------------------------------------------------------------------------
+    match /leadsMeetings/{meetId} {
+      allow read, write: if isAdmin();
+    }
+
+    // -------------------------------------------------------------------------
+    // PRESTACAO DE CONTAS AND DRAFTS (Prestação de Contas e Rascunhos)
+    // -------------------------------------------------------------------------
+    match /prestacaoContas/{prestacaoId} {
+      allow read: if isAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && resource.data.clientId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.clientId);
+      allow write: if isAdmin();
+    }
+
+    match /prestacaoContasDrafts/{draftId} {
+      allow read, write: if isAdmin();
+    }
+
+    // -------------------------------------------------------------------------
+    // RH COLLABORATORS COLLECTION (Recursos Humanos)
+    // -------------------------------------------------------------------------
+    match /rhCollaborators/{collabId} {
+      function isValidRHCollaborator(data) {
+        return data.keys().hasAll(['id', 'name', 'role', 'department', 'status']) &&
+               data.id is string &&
+               data.name is string && data.name.size() <= 200 &&
+               data.role is string && data.role.size() <= 200 &&
+               data.department is string && data.department.size() <= 100 &&
+               data.status is string && (data.status == 'Ativo' || data.status == 'Inativo') &&
+               (!data.keys().hasAny(['goals']) || data.goals is list);
+      }
+
+      allow read: if isAdmin();
+      allow create, update: if isAdmin() && isValidRHCollaborator(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // -------------------------------------------------------------------------
+    // CONTRACT CLAUSE TEMPLATES (Versioned Clause Templates)
+    // -------------------------------------------------------------------------
+    match /contractClauseTemplates/{templateId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+      
+      match /versions/{versionId} {
+        allow read: if isSignedIn();
+        allow write: if isAdmin();
+      }
+    }
+  }
+}

@@ -1,0 +1,619 @@
+{
+  "entities": {
+    "Client": {
+      "title": "Giffoni Client",
+      "description": "Unified client document containing either PF or PJ data blocks.",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["PF", "PJ"] },
+        "active": { "type": "boolean" },
+        "slug": { "type": "string" },
+        "pfData": {
+          "type": "object",
+          "properties": {
+            "pf_nomeCompleto": { "type": "string" },
+            "pf_cpf": { "type": "string" },
+            "pf_rg": { "type": "string" },
+            "pf_dataNascimento": { "type": "string" },
+            "pf_estadoCivil": { "type": "string" },
+            "pf_profissao": { "type": "string" },
+            "pf_nacionalidade": { "type": "string" },
+            "pf_email": { "type": "string" },
+            "pf_telefone": { "type": "string" },
+            "pf_whatsapp": { "type": "string" },
+            "pf_cep": { "type": "string" },
+            "pf_endereco": { "type": "string" },
+            "pf_numero": { "type": "string" },
+            "pf_complemento": { "type": "string" },
+            "pf_bairro": { "type": "string" },
+            "pf_cidade": { "type": "string" },
+            "pf_estado": { "type": "string" },
+            "pf_instagram": { "type": "string" },
+            "pf_facebook": { "type": "string" },
+            "pf_tiktok": { "type": "string" }
+          }
+        },
+        "pjData": {
+          "type": "object",
+          "properties": {
+            "pj_razaoSocial": { "type": "string" },
+            "pj_nomeFantasia": { "type": "string" },
+            "pj_cnpj": { "type": "string" },
+            "pj_inscricaoEstadual": { "type": "string" },
+            "pj_emailEmpresa": { "type": "string" },
+            "pj_telefoneEmpresa": { "type": "string" },
+            "pj_whatsappEmpresa": { "type": "string" },
+            "pj_cepEmpresa": { "type": "string" },
+            "pj_enderecoEmpresa": { "type": "string" },
+            "pj_numeroEmpresa": { "type": "string" },
+            "pj_complementoEmpresa": { "type": "string" },
+            "pj_bairroEmpresa": { "type": "string" },
+            "pj_cidadeEmpresa": { "type": "string" },
+            "pj_estadoEmpresa": { "type": "string" },
+            "pj_instagramEmpresa": { "type": "string" },
+            "pj_facebookEmpresa": { "type": "string" },
+            "pj_tiktokEmpresa": { "type": "string" }
+          }
+        },
+        "socioData": {
+          "type": "object",
+          "properties": {
+            "socio_nomeCompleto": { "type": "string" },
+            "socio_cpf": { "type": "string" },
+            "socio_rg": { "type": "string" },
+            "socio_dataNascimento": { "type": "string" },
+            "socio_estadoCivil": { "type": "string" },
+            "socio_profissao": { "type": "string" },
+            "socio_nacionalidade": { "type": "string" },
+            "socio_cargo": { "type": "string" },
+            "socio_email": { "type": "string" },
+            "socio_telefone": { "type": "string" },
+            "socio_whatsapp": { "type": "string" },
+            "socio_cep": { "type": "string" },
+            "socio_endereco": { "type": "string" },
+            "socio_numero": { "type": "string" },
+            "socio_complemento": { "type": "string" },
+            "socio_bairro": { "type": "string" },
+            "socio_cidade": { "type": "string" },
+            "socio_estado": { "type": "string" },
+            "socio_instagram": { "type": "string" },
+            "socio_facebook": { "type": "string" },
+            "socio_tiktok": { "type": "string" }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["type", "active", "slug"]
+    },
+    "ClientPortal": {
+      "title": "Client Portal Link",
+      "description": "Mapping from slugs to client IDs.",
+      "type": "object",
+      "properties": {
+        "clientId": { "type": "string" },
+        "slug": { "type": "string" }
+      },
+      "required": ["clientId", "slug"]
+    },
+    "User": {
+      "title": "Platform User",
+      "description": "User profile with role-based access.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["boss_admin", "client"] },
+        "clientId": { "type": "string" }
+      },
+      "required": ["email", "role"]
+    },
+    "Case": {
+      "title": "Legal Case",
+      "description": "The central entity for legal process tracking.",
+      "type": "object",
+      "properties": {
+        "clientId": { "type": "string" },
+        "title": { "type": "string" },
+        "processNumber": { "type": "string" },
+        "actionType": { "type": "string" },
+        "court": { "type": "string" },
+        "district": { "type": "string" },
+        "tribunal": { "type": "string" },
+        "responsibleLawyer": { "type": "string" },
+        "status": { "type": "string" },
+        "priority": { "type": "string" },
+        "lastUpdate": { "type": "string" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["clientId", "title", "status"]
+    },
+    "CaseEvent": {
+      "title": "Case Event",
+      "description": "Audiences, meetings, expertises, and deadlines.",
+      "type": "object",
+      "properties": {
+        "caseId": { "type": "string" },
+        "clientId": { "type": "string" },
+        "type": { "type": "string", "enum": ["audiencia", "pericia", "reuniao", "prazo", "compromisso"] },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "time": { "type": "string" },
+        "location": { "type": "string" },
+        "status": { "type": "string", "enum": ["agendado", "realizado", "cancelado", "remarcado"] },
+        "visibleToClient": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["caseId", "clientId", "type", "title", "date"]
+    },
+    "CasePendingTask": {
+      "title": "Case Pending Task",
+      "description": "Tasks or documents requested from the client.",
+      "type": "object",
+      "properties": {
+        "caseId": { "type": "string" },
+        "clientId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "type": { "type": "string", "enum": ["documento", "confirmacao", "assinatura", "informacao", "outro"] },
+        "status": { "type": "string", "enum": ["pendente", "concluido", "vencido"] },
+        "dueDate": { "type": "string", "format": "date" },
+        "visibleToClient": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["caseId", "clientId", "title", "status"]
+    },
+    "CaseExplanation": {
+      "title": "Case Explanation",
+      "description": "Giffoni Explica: Manual explanations for the client.",
+      "type": "object",
+      "properties": {
+        "caseId": { "type": "string" },
+        "clientId": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "category": { "type": "string", "enum": ["andamento", "decisao", "audiencia", "pericia", "financeiro", "geral"] },
+        "visibleToClient": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["caseId", "clientId", "title", "content"]
+    },
+    "CaseDocument": {
+      "title": "Case Document",
+      "description": "Linked documents, proofs, and pending uploads.",
+      "type": "object",
+      "properties": {
+        "caseId": { "type": "string" },
+        "clientId": { "type": "string" },
+        "title": { "type": "string" },
+        "type": { "type": "string" },
+        "url": { "type": "string" },
+        "status": { "type": "string", "enum": ["vinculado", "solicitado", "pendente"] },
+        "visibleToClient": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["caseId", "clientId", "title", "status"]
+    },
+    "CaseFinancial": {
+      "title": "Case Financial",
+      "description": "Honorariums and payment tracking.",
+      "type": "object",
+      "properties": {
+        "caseId": { "type": "string" },
+        "clientId": { "type": "string" },
+        "totalAmount": { "type": "number" },
+        "status": { "type": "string" },
+        "installments": { "type": "number" },
+        "installmentsPaid": { "type": "number" },
+        "nextDueDate": { "type": "string", "format": "date-time" },
+        "visibleToClient": { "type": "boolean" }
+      },
+      "required": ["caseId", "clientId", "status"]
+    },
+    "CaseCommunication": {
+      "title": "Case Communication",
+      "description": "Messages, requests, and 'Giffoni Explica'.",
+      "type": "object",
+      "properties": {
+        "caseId": { "type": "string" },
+        "clientId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "content": { "type": "string" },
+        "type": { "type": "string", "enum": ["mensagem", "solicitacao", "aviso", "explicacao"] },
+        "visibleToClient": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["caseId", "clientId", "content", "type"]
+    },
+    "SystemSetting": {
+      "title": "System Setting",
+      "description": "Global settings for portal links and parameters.",
+      "type": "object",
+      "properties": {
+        "link": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["link"]
+    },
+    "CaseInformationRequest": {
+      "title": "Case Information Request",
+      "description": "Factual questions requested from the client for a specific case.",
+      "type": "object",
+      "properties": {
+        "caseId": { "type": "string" },
+        "clientId": { "type": "string" },
+        "question": { "type": "string" },
+        "answer": { "type": "string" },
+        "status": { "type": "string", "enum": ["pendente", "respondido", "revisado"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["caseId", "clientId", "question", "status"]
+    },
+    "CaseEvidenceRequest": {
+      "title": "Case Evidence Request",
+      "description": "Evidence documents requested from the client for a specific case.",
+      "type": "object",
+      "properties": {
+        "caseId": { "type": "string" },
+        "clientId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["pendente", "entregue", "aprovado", "rejeitado", "revisao_solicitada"] },
+        "files": {
+          "type": "array"
+        },
+        "googleDriveFolderId": { "type": "string" },
+        "googleDriveFileId": { "type": "string" },
+        "googleDriveFileUrl": { "type": "string" },
+        "driveSyncStatus": { "type": "string", "enum": ["nao_sincronizado", "sincronizando", "sincronizado", "erro"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["caseId", "clientId", "title", "status"]
+    },
+    "MasterEditorLog": {
+      "title": "Master Editor Log",
+      "description": "Logs of changes made via the Master Client Editor area.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "clientId": { "type": "string" },
+        "caseId": { "type": "string" },
+        "areaChanged": { "type": "string" },
+        "action": { "type": "string" },
+        "previousValue": { "type": "string" },
+        "newValue": { "type": "string" },
+        "changedBy": { "type": "string" },
+        "changedAt": { "type": "string", "format": "date-time" },
+        "reason": { "type": "string" }
+      },
+      "required": ["id", "clientId", "areaChanged", "action", "changedBy", "changedAt"]
+    },
+    "GoogleDriveJob": {
+      "title": "Google Drive Job",
+      "description": "Fila de processamento assíncrono para criação de pasta no Google Drive.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["pending", "success", "failed"] },
+        "clientType": { "type": "string", "enum": ["PF", "PJ"] },
+        "portalClientId": { "type": "string" },
+        "caseId": { "type": "string" },
+        "clientFolderName": { "type": "string" },
+        "originBlock": { "type": "string" },
+        "originField": { "type": "string" },
+        "folderId": { "type": "string" },
+        "folderUrl": { "type": "string" },
+        "googleDriveClientFolderId": { "type": "string" },
+        "googleDriveClientFolderUrl": { "type": "string" },
+        "errorMessage": { "type": "string" },
+        "processedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["status", "clientType", "portalClientId", "caseId", "clientFolderName", "createdAt"]
+    },
+    "GoogleDocsJob": {
+      "title": "Google Docs Integration Job",
+      "description": "Fila de processamento assíncrono para geração de documentos no Google Docs.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "source": { "type": "string" },
+        "target": { "type": "string" },
+        "documentType": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "success", "failed"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "caseId": { "type": "string" },
+        "portalClientId": { "type": "string" },
+        "clientType": { "type": "string" },
+        "destinationFolderId": { "type": "string" },
+        "destinationFolderUrl": { "type": "string" },
+        "templateKey": { "type": "string" },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "nomeCompleto": { "type": "string" },
+            "nacionalidade": { "type": "string" },
+            "estadoCivil": { "type": "string" },
+            "profissao": { "type": "string" },
+            "cpf": { "type": "string" },
+            "rg": { "type": "string" },
+            "endereco": { "type": "string" },
+            "numero": { "type": "string" },
+            "complemento": { "type": "string" },
+            "bairro": { "type": "string" },
+            "cidade": { "type": "string" },
+            "estado": { "type": "string" },
+            "cep": { "type": "string" },
+            "email": { "type": "string" },
+            "telefone": { "type": "string" },
+            "whatsapp": { "type": "string" },
+            "localAssinatura": { "type": "string" },
+            "advogadoNome": { "type": "string" },
+            "advogadoOab": { "type": "string" },
+            "dataAssinatura": { "type": "string" }
+          }
+        },
+        "result": {
+          "type": "object",
+          "properties": {
+            "googleDocsId": { "type": "string" },
+            "googleDocsUrl": { "type": "string" },
+            "fileName": { "type": "string" }
+          }
+        },
+        "errorCode": { "type": "string" },
+        "errorMessage": { "type": "string" },
+        "logs": {
+          "type": "array",
+          "items": { "type": "object" }
+        },
+        "version": { "type": "number" }
+      },
+      "required": ["status", "clientType", "portalClientId", "caseId", "documentType", "createdAt"]
+    },
+    "MarketingLead": {
+      "title": "Marketing Lead",
+      "description": "Prospect lead captured from marketing sources.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "origemLead": { "type": "string" },
+        "areaJuridica": { "type": "string" },
+        "assunto": { "type": "string" },
+        "dorPrincipal": { "type": "string" },
+        "urgencia": { "type": "string" },
+        "statusFunil": { "type": "string" },
+        "convertidoEmCliente": { "type": "boolean" },
+        "tipoPessoa": { "type": "string", "enum": ["PF", "PJ"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["origemLead", "statusFunil", "tipoPessoa"]
+    },
+    "LeadMeeting": {
+      "title": "Lead Meeting",
+      "description": "Meetings and appointments scheduled for marketing leads.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "leadId": { "type": "string" },
+        "title": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["leadId", "title", "date", "time"]
+    },
+    "PrestacaoContas": {
+      "title": "Prestação de Contas",
+      "description": "Submitted accountability statement for a client's process.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "clientId": { "type": "string" },
+        "clientName": { "type": "string" },
+        "caseId": { "type": "string" },
+        "caseTitle": { "type": "string" },
+        "caseProcessNumber": { "type": "string" },
+        "feesSystem": { "type": "string" },
+        "formaRecebimento": { "type": "string" },
+        "alvaraId": { "type": "string" },
+        "alvaraDebitoData": { "type": "string" },
+        "alvaraRecebido": { "type": "string" },
+        "contaDeposito": { "type": "string" },
+        "depositadoContaCliente": { "type": "string" },
+        "valorContrato": { "type": "number" },
+        "valorRecebidoTotal": { "type": "number" },
+        "valorHonorariosDeduzido": { "type": "number" },
+        "despesas": { "type": "number" },
+        "valorRepasse": { "type": "number" },
+        "contaRepasse": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "clientId", "caseId", "valorRecebidoTotal", "valorRepasse", "createdAt"]
+    },
+    "PrestacaoContasDraft": {
+      "title": "Rascunho de Prestação de Contas",
+      "description": "Draft of accountability statement saved by admin.",
+      "type": "object",
+      "properties": {
+        "clientId": { "type": "string" },
+        "slug": { "type": "string" },
+        "targetCaseId": { "type": "string" },
+        "feesSystem": { "type": "string" },
+        "honorarioExitoPercentual": { "type": "number" },
+        "valorContrato": { "type": "number" },
+        "formaRecebimento": { "type": "string" },
+        "contaDeposito": { "type": "string" },
+        "depositadoContaCliente": { "type": "string" },
+        "alvaraId": { "type": "string" },
+        "alvaraDebitoData": { "type": "string" },
+        "alvaraRecebido": { "type": "string" },
+        "valorRecebidoTotal": { "type": "number" },
+        "valorHonorariosDeduzido": { "type": "number" },
+        "despesas": { "type": "number" },
+        "contaRepasse": { "type": "string" },
+        "thanksMessage": { "type": "string" },
+        "selectedChannel": { "type": "string" },
+        "tipoContaDepositada": { "type": "string" },
+        "selectedProcuradorConta": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["clientId", "updatedAt"]
+    },
+    "RHCollaborator": {
+      "title": "RH Collaborator",
+      "description": "Collaborator profile and goals tracked by Human Resources.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "department": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "status": { "type": "string", "enum": ["Ativo", "Inativo"] },
+        "goals": {
+          "type": "array"
+        }
+      },
+      "required": ["id", "name", "role", "department", "status"]
+    },
+    "ContractClauseTemplate": {
+      "title": "Contract Clause Template",
+      "description": "Metadata for versioned contract clause templates.",
+      "type": "object",
+      "properties": {
+        "templateKey": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "activeVersionId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["templateKey", "name"]
+    },
+    "ContractClauseTemplateVersion": {
+      "title": "Contract Clause Template Version",
+      "description": "A specific version of contract clause templates under subcollection versions.",
+      "type": "object",
+      "properties": {
+        "versionId": { "type": "string" },
+        "templates": {
+          "type": "object",
+          "properties": {
+            "fixo": { "type": "string" },
+            "exito_simples": { "type": "string" },
+            "exito_completo_trabalhista": { "type": "string" },
+            "exito_completo_previdenciario": { "type": "string" },
+            "fixo_mais_exito_simples": { "type": "string" },
+            "fixo_mais_exito_completo_trabalhista": { "type": "string" },
+            "fixo_mais_exito_completo_previdenciario": { "type": "string" }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["versionId", "templates", "createdAt"]
+    }
+  },
+  "firestore": {
+    "contractClauseTemplates": {
+      "schema": "ContractClauseTemplate",
+      "description": "Versioned contract clause templates."
+    },
+    "clients": {
+      "schema": "Client",
+      "description": "Consolidated client data."
+    },
+    "clientPortals": {
+      "schema": "ClientPortal",
+      "description": "Slug-to-clientId mapping."
+    },
+    "users": {
+      "schema": "User",
+      "description": "User profiles for auth."
+    },
+    "cases": {
+      "schema": "Case",
+      "description": "Legal cases."
+    },
+    "caseEvents": {
+      "schema": "CaseEvent",
+      "description": "Events linked to a case."
+    },
+    "casePendingTasks": {
+      "schema": "CasePendingTask",
+      "description": "Tasks pending from client."
+    },
+    "caseExplanations": {
+      "schema": "CaseExplanation",
+      "description": "Manual explanations for client."
+    },
+    "caseDocuments": {
+      "schema": "CaseDocument",
+      "description": "Documents linked to a case."
+    },
+    "caseFinancials": {
+      "schema": "CaseFinancial",
+      "description": "Financial records for cases."
+    },
+    "caseCommunications": {
+      "schema": "CaseCommunication",
+      "description": "Communications for cases."
+    },
+    "caseInformationRequests": {
+      "schema": "CaseInformationRequest",
+      "description": "Factual questions requested from the client."
+    },
+    "caseEvidenceRequests": {
+      "schema": "CaseEvidenceRequest",
+      "description": "Evidence documents requested from the client."
+    },
+    "settings": {
+      "schema": "SystemSetting",
+      "description": "Global settings parameters."
+    },
+    "masterEditorLogs": {
+      "schema": "MasterEditorLog",
+      "description": "Audit logs for changes made via the Master Client Editor."
+    },
+    "googleDriveJobs": {
+      "schema": "GoogleDriveJob",
+      "description": "Fila de processamento de integração com o Google Drive."
+    },
+    "googleDocsJobs": {
+      "schema": "GoogleDocsJob",
+      "description": "Fila de processamento de geração automatizada de documentos no Google Docs/Drive."
+    },
+    "marketingLeads": {
+      "schema": "MarketingLead",
+      "description": "Leads collected and managed by the marketing sector."
+    },
+    "leadsMeetings": {
+      "schema": "LeadMeeting",
+      "description": "Meetings and appointments scheduled for marketing leads."
+    },
+    "prestacaoContas": {
+      "schema": "PrestacaoContas",
+      "description": "Submitted accountability statements."
+    },
+    "prestacaoContasDrafts": {
+      "schema": "PrestacaoContasDraft",
+      "description": "Draft storage for accountability statements."
+    },
+    "rhCollaborators": {
+      "schema": "RHCollaborator",
+      "description": "Collaborators and their goals managed by the RH sector."
+    }
+  }
+}

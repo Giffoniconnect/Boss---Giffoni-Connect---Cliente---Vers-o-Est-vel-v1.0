@@ -1,0 +1,8 @@
+{
+  "name": "BOSS Giffoni Clientes",
+  "description": "Núcleo administrativo e Portal do Cliente espelhado e modular para Giffoni Connect.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
