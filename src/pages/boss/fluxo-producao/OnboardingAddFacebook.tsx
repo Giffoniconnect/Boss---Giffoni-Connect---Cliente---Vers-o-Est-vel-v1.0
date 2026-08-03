@@ -136,7 +136,9 @@ export default function OnboardingAddFacebook() {
         facebook: {
           ...formData,
           nomeCompletoCliente: resolvedClientName,
-          facebookInformed: facebookInformed
+          facebookInformed: facebookInformed,
+          status: formData.naoAplicavel ? 'not_applicable' : (formData.clienteAdicionadoFacebook === 'sim' ? 'completed' : 'pending'),
+          humanCertified: formData.naoAplicavel || formData.clienteAdicionadoFacebook === 'sim'
         },
         auditoria: {
           ...(existingOnboarding.auditoria || {}),

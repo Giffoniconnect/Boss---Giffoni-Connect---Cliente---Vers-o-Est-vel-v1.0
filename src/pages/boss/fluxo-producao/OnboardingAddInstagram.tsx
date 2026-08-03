@@ -136,7 +136,9 @@ export default function OnboardingAddInstagram() {
         instagram: {
           ...formData,
           nomeCompletoCliente: resolvedClientName,
-          instagramInformed: instagramInformed
+          instagramInformed: instagramInformed,
+          status: formData.naoAplicavel ? 'not_applicable' : (formData.clienteAdicionadoInstagram === 'sim' ? 'completed' : 'pending'),
+          humanCertified: formData.naoAplicavel || formData.clienteAdicionadoInstagram === 'sim'
         },
         auditoria: {
           ...(existingOnboarding.auditoria || {}),

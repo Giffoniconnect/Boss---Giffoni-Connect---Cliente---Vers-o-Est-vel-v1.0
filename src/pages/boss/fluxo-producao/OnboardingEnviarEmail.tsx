@@ -120,7 +120,9 @@ export default function OnboardingEnviarEmail() {
         email: {
           ...formData,
           nomeCompletoCliente: resolvedClientName,
-          emailInformed: emailInformed
+          emailInformed: emailInformed,
+          status: (formData.emailBoasVindasEnviadoCliente === 'sim' && formData.acessoPortalClienteAnalisado === 'sim') ? 'completed' : 'pending',
+          humanCertified: (formData.emailBoasVindasEnviadoCliente === 'sim' && formData.acessoPortalClienteAnalisado === 'sim')
         },
         auditoria: {
           ...(existingOnboarding.auditoria || {}),

@@ -34,6 +34,92 @@ export interface OnboardingStepPlan {
   humanCertified?: boolean;
 }
 
+export function extractClientPhone(client: any): string {
+  if (!client) return '';
+  const isPj = client.type === 'PJ' || client.tipoPessoa === 'PJ' || client.isCompany === true;
+
+  const candidates = isPj
+    ? [
+        client.pjData?.pj_telefoneEmpresa,
+        client.pjDadosEmpresa?.pj_telefoneEmpresa,
+        client.pj_telefoneEmpresa,
+
+        client.pjData?.pj_telefoneRepresentante,
+        client.pjDadosEmpresa?.pj_telefoneRepresentante,
+
+        client.pjData?.pj_whatsappEmpresa,
+        client.pjDadosEmpresa?.pj_whatsappEmpresa,
+        client.pj_whatsappEmpresa,
+
+        client.phone,
+        client.telefone
+      ]
+    : [
+        client.pfData?.pf_telefoneCelular,
+        client.pfDadosPessoais?.pf_telefoneCelular,
+        client.pf_telefoneCelular,
+        
+        client.pfData?.pf_whatsapp,
+        client.pfDadosPessoais?.pf_whatsapp,
+        client.pf_whatsapp,
+
+        client.pfData?.pf_telefone,
+        client.pfDadosPessoais?.pf_telefone,
+        client.pf_telefone,
+
+        client.pfContato?.whatsapp,
+        client.pfContato?.telefone,
+
+        client.phone,
+        client.telefone
+      ];
+
+  for (const raw of candidates) {
+    if (raw !== undefined && raw !== null) {
+      const cleaned = String(raw).trim();
+      if (cleaned !== '' && cleaned !== 'Não possuo') {
+        return cleaned;
+      }
+    }
+  }
+
+  return '';
+}
+
+export function isPhoneNotOwned(client: any): boolean {
+  if (!client) return false;
+  if (client.phoneNotOwned === true) return true;
+  const isPj = client.type === 'PJ' || client.tipoPessoa === 'PJ' || client.isCompany === true;
+
+  const candidates = isPj
+    ? [
+        client.pjData?.pj_telefoneEmpresa,
+        client.pjDadosEmpresa?.pj_telefoneEmpresa,
+        client.pj_telefoneEmpresa,
+        client.phone,
+        client.telefone
+      ]
+    : [
+        client.pfData?.pf_telefoneCelular,
+        client.pfDadosPessoais?.pf_telefoneCelular,
+        client.pf_telefoneCelular,
+        client.pfData?.pf_whatsapp,
+        client.pfDadosPessoais?.pf_whatsapp,
+        client.pf_whatsapp,
+        client.phone,
+        client.telefone
+      ];
+
+  for (const raw of candidates) {
+    if (raw !== undefined && raw !== null) {
+      if (String(raw).trim() === 'Não possuo') {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 export function extractClientOnboardingFields(client: any): ClientOnboardingData {
   if (!client) {
     return {
@@ -58,9 +144,7 @@ export function extractClientOnboardingFields(client: any): ClientOnboardingData
     ? (client.pjDadosEmpresa?.pj_razaoSocial || client.pjData?.pj_razaoSocial || client.name || '')
     : (client.pfDadosPessoais?.pf_nomeCompleto || client.pfData?.pf_nomeCompleto || client.name || '');
 
-  const phone = isPj
-    ? (client.pjDadosEmpresa?.pj_telefoneEmpresa || client.pjData?.pj_telefoneEmpresa || client.pjDadosEmpresa?.pj_telefoneRepresentante || client.pjData?.pj_telefoneRepresentante || client.phone || '')
-    : (client.pfDadosPessoais?.pf_telefoneCelular || client.pfData?.pf_telefoneCelular || client.phone || '');
+  const phone = extractClientPhone(client);
 
   const hasWhatsapp = isPj
     ? (client.pjDadosEmpresa?.pj_possuiWhatsappEmpresa === true || client.pjData?.pj_possuiWhatsappEmpresa === true || client.pj_possuiWhatsappEmpresa === true || client.possuiWhatsApp === true)
@@ -82,7 +166,7 @@ export function extractClientOnboardingFields(client: any): ClientOnboardingData
     ? (client.pjDadosEmpresa?.pj_emailEmpresa || client.pjData?.pj_emailEmpresa || client.email || '')
     : (client.pfDadosPessoais?.pf_email || client.pfData?.pf_email || client.email || '');
 
-  const phoneNotOwned = phone === 'Não possuo' || client.phoneNotOwned === true;
+  const phoneNotOwned = isPhoneNotOwned(client);
   const instagramNotOwned = instagram === 'Não possuo' || client.instagramNotOwned === true;
   const facebookNotOwned = facebook === 'Não possuo' || client.facebookNotOwned === true;
   const tiktokNotOwned = tiktok === 'Não possuo' || client.tiktokNotOwned === true;
@@ -107,17 +191,44 @@ export function extractClientOnboardingFields(client: any): ClientOnboardingData
 export function buildOnboardingExecutionPlan(clientData: ClientOnboardingData, onboardingState: any): OnboardingStepPlan[] {
   const onb = onboardingState || {};
   
-  // Step 1: Google Contacts
+  // Dynamic validation constraints:
+  // If data in general registration has changed from what was saved during onboarding, we dynamically invalidate the step.
   const gcState = onb.googleContacts || {};
+  const recordedPhone = onb.telefone?.telefoneInformed || gcState.telefoneInformed || '';
+  const isPhoneChanged = recordedPhone && clientData.phone && recordedPhone !== clientData.phone;
+
+  const instState = onb.instagram || {};
+  const recordedInst = instState.instagramInformed || '';
+  const isInstChanged = recordedInst && clientData.instagram && recordedInst !== clientData.instagram;
+
+  const fbState = onb.facebook || {};
+  const recordedFb = fbState.facebookInformed || '';
+  const isFbChanged = recordedFb && clientData.facebook && recordedFb !== clientData.facebook;
+
+  const tkState = onb.tiktok || {};
+  const recordedTk = tkState.tiktokInformed || '';
+  const isTkChanged = recordedTk && clientData.tiktok && recordedTk !== clientData.tiktok;
+
+  const emState = onb.email || {};
+  const recordedEmail = emState.emailInformed || '';
+  const isEmailChanged = recordedEmail && clientData.email && recordedEmail !== clientData.email;
+
+  // Step 1: Google Contacts
   let step1Status: OnboardingStepStatus = 'available';
   let step1Reason = '';
   
-  if (clientData.phoneNotOwned || clientData.phone === 'Não possuo') {
+  if (gcState.status === 'not_applicable' || gcState.naoAplicavel === true) {
+    step1Status = 'dispensed_not_owned';
+    step1Reason = 'Etapa marcada expressamente como não aplicável por escolha humana.';
+  } else if (clientData.phoneNotOwned || clientData.phone === 'Não possuo') {
     step1Status = 'dispensed_not_owned';
     step1Reason = 'Telefone formalmente registrado como inexistente.';
   } else if (!clientData.name || !clientData.phone || clientData.phone.trim() === '') {
     step1Status = 'blocked_missing_data';
     step1Reason = 'Telefone está vazio e não marcado como "Não possuo".';
+  } else if (isPhoneChanged) {
+    step1Status = 'available';
+    step1Reason = 'O telefone foi alterado na Etapa 1. Homologação prévia invalidada.';
   } else if (gcState.status === 'completed' && gcState.humanCertified) {
     step1Status = 'completed';
   } else if (gcState.status === 'completed' && !gcState.humanCertified) {
@@ -131,12 +242,18 @@ export function buildOnboardingExecutionPlan(clientData: ClientOnboardingData, o
   let step2Status: OnboardingStepStatus = 'available';
   let step2Reason = '';
 
-  if (clientData.phoneNotOwned || clientData.phone === 'Não possuo' || !clientData.hasWhatsapp) {
+  if (wzState.status === 'not_applicable' || wzState.naoAplicavel === true) {
+    step2Status = 'dispensed_not_owned';
+    step2Reason = 'Etapa marcada expressamente como não aplicável por escolha humana.';
+  } else if (clientData.phoneNotOwned || clientData.phone === 'Não possuo' || !clientData.hasWhatsapp) {
     step2Status = 'dispensed_not_owned';
     step2Reason = 'Cliente não possui WhatsApp ou telefone inexistente.';
   } else if (!clientData.phone || clientData.phone.trim() === '') {
     step2Status = 'blocked_missing_data';
     step2Reason = 'Telefone do cliente é obrigatório para WhatsApp.';
+  } else if (isPhoneChanged) {
+    step2Status = 'available';
+    step2Reason = 'O telefone do cliente foi alterado na Etapa 1. Homologação prévia invalidada.';
   } else if (wzState.status === 'completed' && wzState.humanCertified) {
     step2Status = 'completed';
   } else if (wzState.status === 'completed' && !wzState.humanCertified) {
@@ -146,16 +263,21 @@ export function buildOnboardingExecutionPlan(clientData: ClientOnboardingData, o
   }
 
   // Step 3: Instagram
-  const instState = onb.instagram || {};
   let step3Status: OnboardingStepStatus = 'available';
   let step3Reason = '';
 
-  if (clientData.instagramNotOwned || clientData.instagram === 'Não possuo') {
+  if (instState.status === 'not_applicable' || instState.naoAplicavel === true) {
+    step3Status = 'dispensed_not_owned';
+    step3Reason = 'Etapa marcada expressamente como não aplicável por escolha humana.';
+  } else if (clientData.instagramNotOwned || clientData.instagram === 'Não possuo') {
     step3Status = 'dispensed_not_owned';
     step3Reason = 'Instagram formalmente registrado como inexistente.';
   } else if (!clientData.instagram || clientData.instagram.trim() === '') {
     step3Status = 'blocked_missing_data';
     step3Reason = 'Instagram está vazio e não marcado como "Não possuo".';
+  } else if (isInstChanged) {
+    step3Status = 'available';
+    step3Reason = 'O Instagram foi alterado na Etapa 1. Homologação prévia invalidada.';
   } else if (instState.status === 'completed' && instState.humanCertified) {
     step3Status = 'completed';
   } else if (instState.status === 'completed' && !instState.humanCertified) {
@@ -165,16 +287,21 @@ export function buildOnboardingExecutionPlan(clientData: ClientOnboardingData, o
   }
 
   // Step 4: Facebook
-  const fbState = onb.facebook || {};
   let step4Status: OnboardingStepStatus = 'available';
   let step4Reason = '';
 
-  if (clientData.facebookNotOwned || clientData.facebook === 'Não possuo') {
+  if (fbState.status === 'not_applicable' || fbState.naoAplicavel === true) {
+    step4Status = 'dispensed_not_owned';
+    step4Reason = 'Etapa marcada expressamente como não aplicável por escolha humana.';
+  } else if (clientData.facebookNotOwned || clientData.facebook === 'Não possuo') {
     step4Status = 'dispensed_not_owned';
     step4Reason = 'Facebook formalmente registrado como inexistente.';
   } else if (!clientData.facebook || clientData.facebook.trim() === '') {
     step4Status = 'blocked_missing_data';
     step4Reason = 'Facebook está vazio e não marcado como "Não possuo".';
+  } else if (isFbChanged) {
+    step4Status = 'available';
+    step4Reason = 'O Facebook foi alterado na Etapa 1. Homologação prévia invalidada.';
   } else if (fbState.status === 'completed' && fbState.humanCertified) {
     step4Status = 'completed';
   } else if (fbState.status === 'completed' && !fbState.humanCertified) {
@@ -184,16 +311,21 @@ export function buildOnboardingExecutionPlan(clientData: ClientOnboardingData, o
   }
 
   // Step 5: TikTok
-  const tkState = onb.tiktok || {};
   let step5Status: OnboardingStepStatus = 'available';
   let step5Reason = '';
 
-  if (clientData.tiktokNotOwned || clientData.tiktok === 'Não possuo') {
+  if (tkState.status === 'not_applicable' || tkState.naoAplicavel === true) {
+    step5Status = 'dispensed_not_owned';
+    step5Reason = 'Etapa marcada expressamente como não aplicável por escolha humana.';
+  } else if (clientData.tiktokNotOwned || clientData.tiktok === 'Não possuo') {
     step5Status = 'dispensed_not_owned';
     step5Reason = 'TikTok formalmente registrado como inexistente.';
   } else if (!clientData.tiktok || clientData.tiktok.trim() === '') {
     step5Status = 'blocked_missing_data';
     step5Reason = 'TikTok está vazio e não marcado como "Não possuo".';
+  } else if (isTkChanged) {
+    step5Status = 'available';
+    step5Reason = 'O TikTok foi alterado na Etapa 1. Homologação prévia invalidada.';
   } else if (tkState.status === 'completed' && tkState.humanCertified) {
     step5Status = 'completed';
   } else if (tkState.status === 'completed' && !tkState.humanCertified) {
@@ -203,16 +335,21 @@ export function buildOnboardingExecutionPlan(clientData: ClientOnboardingData, o
   }
 
   // Step 6: Welcome Email
-  const emState = onb.email || {};
   let step6Status: OnboardingStepStatus = 'available';
   let step6Reason = '';
 
-  if (clientData.emailNotOwned || clientData.email === 'Não possuo') {
+  if (emState.status === 'not_applicable' || emState.naoAplicavel === true) {
+    step6Status = 'dispensed_not_owned';
+    step6Reason = 'Etapa marcada expressamente como não aplicável por escolha humana.';
+  } else if (clientData.emailNotOwned || clientData.email === 'Não possuo') {
     step6Status = 'dispensed_not_owned';
     step6Reason = 'E-mail formalmente registrado como inexistente.';
   } else if (!clientData.email || clientData.email.trim() === '') {
     step6Status = 'blocked_missing_data';
     step6Reason = 'E-mail está vazio e não marcado como "Não possuo".';
+  } else if (isEmailChanged) {
+    step6Status = 'available';
+    step6Reason = 'O e-mail foi alterado na Etapa 1. Homologação prévia invalidada.';
   } else if (emState.status === 'completed' && emState.humanCertified) {
     step6Status = 'completed';
   } else if (emState.status === 'completed' && !emState.humanCertified) {
@@ -229,9 +366,15 @@ export function buildOnboardingExecutionPlan(clientData: ClientOnboardingData, o
   const hasNoWhatsapp = clientData.phoneNotOwned || clientData.phone === 'Não possuo' || !clientData.hasWhatsapp || !clientData.phone || clientData.phone.trim() === '';
   const hasNoEmail = clientData.emailNotOwned || clientData.email === 'Não possuo' || !clientData.email || clientData.email.trim() === '';
 
-  if (hasNoWhatsapp && hasNoEmail) {
+  if (acState.status === 'not_applicable' || acState.naoAplicavel === true) {
+    step7Status = 'dispensed_not_owned';
+    step7Reason = 'Etapa marcada expressamente como não aplicável por escolha humana.';
+  } else if (hasNoWhatsapp && hasNoEmail) {
     step7Status = 'dispensed_no_channel';
     step7Reason = 'Sem canais de envio válidos (WhatsApp ou E-mail).';
+  } else if (isPhoneChanged || isEmailChanged) {
+    step7Status = 'available';
+    step7Reason = 'Canais de contato alterados na Etapa 1. Homologação prévia invalidada.';
   } else if (acState.status === 'completed' && acState.humanCertified) {
     step7Status = 'completed';
   } else if (acState.status === 'completed' && !acState.humanCertified) {
@@ -245,7 +388,7 @@ export function buildOnboardingExecutionPlan(clientData: ClientOnboardingData, o
   let step8Status: OnboardingStepStatus = 'available';
   let step8Reason = '';
 
-  if (audState.status === 'completed') {
+  if (audState.status === 'Onboarding completo ✅' || audState.status === 'completed') {
     step8Status = 'completed';
   }
 

@@ -136,7 +136,9 @@ export default function OnboardingAddTikTok() {
         tiktok: {
           ...formData,
           nomeCompletoCliente: resolvedClientName,
-          tiktokInformed: tiktokInformed
+          tiktokInformed: tiktokInformed,
+          status: formData.naoAplicavel ? 'not_applicable' : (formData.clienteAdicionadoTikTok === 'sim' ? 'completed' : 'pending'),
+          humanCertified: formData.naoAplicavel || formData.clienteAdicionadoTikTok === 'sim'
         },
         auditoria: {
           ...(existingOnboarding.auditoria || {}),

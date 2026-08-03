@@ -33,6 +33,7 @@ import { flowRoutes } from './utils/flowRoutes';
 import { normalizeCpfCnpj, isValidCpf, isValidCnpj } from './utils/documentUtils';
 import { generateSafeClientSlug } from './utils/slugUtils';
 import { useUnsavedChangesGuard } from './hooks/useUnsavedChangesGuard';
+import { extractClientPhone, extractClientOnboardingFields } from './onboardingHelper';
 
 const GoogleDriveIcon = ({ size = 16, className = "" }: { size?: number; className?: string }) => (
   <svg
@@ -404,12 +405,31 @@ export default function EditarCadastroCliente() {
 
       const { pfBlock, pjBlock, socioBlock, acessoBlock, bancarioBlock } = getCategorizedBlocks();
 
+      const tempClientObjForExtraction = {
+        type: clientType,
+        pfData: pfBlock,
+        pfDadosPessoais: pfBlock,
+        pjData: pjBlock,
+        pjDadosEmpresa: pjBlock,
+        phone: isPf ? (pfBlock.pf_telefone || pfBlock.pf_whatsapp || '') : (pjBlock.pj_telefoneEmpresa || pjBlock.pj_whatsappEmpresa || ''),
+        telefone: isPf ? (pfBlock.pf_telefone || pfBlock.pf_whatsapp || '') : (pjBlock.pj_telefoneEmpresa || pjBlock.pj_whatsappEmpresa || ''),
+        email: isPf ? (pfBlock.pf_email || '') : (pjBlock.pj_emailEmpresa || ''),
+        name: mainName,
+        nome: mainName,
+      };
+      const canonicalFields = extractClientOnboardingFields(tempClientObjForExtraction);
+
       // 1. Build clients document update payload
       const payload: any = {
         ...prevClientData,
         clientId: clientId,
         type: clientType,
         slug: slug,
+        name: canonicalFields.name,
+        nome: canonicalFields.name,
+        email: canonicalFields.email,
+        phone: canonicalFields.phone,
+        telefone: canonicalFields.phone,
         updatedAt: rightNow,
         pfData: pfBlock,
         pfDadosPessoais: pfBlock,
@@ -484,24 +504,22 @@ export default function EditarCadastroCliente() {
       await setDoc(doc(db, 'clients', clientId), payload);
 
       // Save mirrored clientes collection
-      const emailVal = isPf ? (pfBlock.pf_email || formData.acesso_emailLogin) : (pjBlock.pj_emailEmpresa || formData.acesso_emailLogin);
-      const phoneVal = isPf ? (pfBlock.pf_telefone || pfBlock.pf_whatsapp || '') : (pjBlock.pj_telefoneEmpresa || pjBlock.pj_whatsappEmpresa || '');
       const pathVal = isPf ? (pfBlock.pf_endereco || '') : (pjBlock.pj_enderecoEmpresa || '');
 
       await setDoc(doc(db, 'clientes', clientId), {
         id: clientId,
         clientId: clientId,
         slug: slug,
-        nome: mainName,
-        name: mainName,
+        nome: canonicalFields.name,
+        name: canonicalFields.name,
         tipoPessoa: clientType,
         type: clientType,
         cpf: isPf ? (pfBlock.pf_cpf || '') : '',
         cnpj: !isPf ? (pjBlock.pj_cnpj || '') : '',
         cpfCnpj: isPf ? (pfBlock.pf_cpf || '') : (pjBlock.pj_cnpj || ''),
-        email: emailVal || '',
-        telefone: phoneVal || '',
-        phone: phoneVal || '',
+        email: canonicalFields.email,
+        telefone: canonicalFields.phone,
+        phone: canonicalFields.phone,
         endereco: pathVal || '',
         address: pathVal || '',
         status: 'active',
