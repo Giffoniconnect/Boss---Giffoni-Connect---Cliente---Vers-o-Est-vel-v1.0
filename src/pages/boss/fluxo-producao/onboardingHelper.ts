@@ -42,6 +42,7 @@ export function extractClientPhone(client: any): string {
     ? [
         client.pjData?.pj_telefoneEmpresa,
         client.pjDadosEmpresa?.pj_telefoneEmpresa,
+        client.pjContatoEmpresa?.pj_telefoneEmpresa,
         client.pj_telefoneEmpresa,
 
         client.pjData?.pj_telefoneRepresentante,
@@ -52,26 +53,57 @@ export function extractClientPhone(client: any): string {
         client.pj_whatsappEmpresa,
 
         client.phone,
-        client.telefone
-      ]
-    : [
-        client.pfData?.pf_telefoneCelular,
-        client.pfDadosPessoais?.pf_telefoneCelular,
-        client.pf_telefoneCelular,
-        
-        client.pfData?.pf_whatsapp,
-        client.pfDadosPessoais?.pf_whatsapp,
-        client.pf_whatsapp,
+        client.telefone,
 
+        // Fallback to PF structures if needed
         client.pfData?.pf_telefone,
         client.pfDadosPessoais?.pf_telefone,
         client.pf_telefone,
-
-        client.pfContato?.whatsapp,
+        client.pfData?.pf_telefoneCelular,
+        client.pfDadosPessoais?.pf_telefoneCelular,
+        client.pf_telefoneCelular,
+        client.pfData?.pf_whatsapp,
+        client.pfDadosPessoais?.pf_whatsapp,
+        client.pf_whatsapp,
+        client.pfContato?.pf_telefone,
+        client.pfContato?.pf_telefoneCelular,
+        client.pfContato?.pf_whatsapp,
         client.pfContato?.telefone,
+        client.pfContato?.whatsapp,
+        client.portalMirror?.pfContato?.telefone,
+        client.portalMirror?.pfContato?.whatsapp
+      ]
+    : [
+        client.pfData?.pf_telefone,
+        client.pfDadosPessoais?.pf_telefone,
+        client.pf_telefone,
+        client.pfData?.pf_telefoneCelular,
+        client.pfDadosPessoais?.pf_telefoneCelular,
+        client.pf_telefoneCelular,
+        client.pfData?.pf_whatsapp,
+        client.pfDadosPessoais?.pf_whatsapp,
+        client.pf_whatsapp,
+        client.pfContato?.pf_telefone,
+        client.pfContato?.pf_telefoneCelular,
+        client.pfContato?.pf_whatsapp,
+        client.pfContato?.telefone,
+        client.pfContato?.whatsapp,
+        client.portalMirror?.pfContato?.telefone,
+        client.portalMirror?.pfContato?.whatsapp,
 
         client.phone,
-        client.telefone
+        client.telefone,
+
+        // Fallback to PJ structures if needed
+        client.pjData?.pj_telefoneEmpresa,
+        client.pjDadosEmpresa?.pj_telefoneEmpresa,
+        client.pjContatoEmpresa?.pj_telefoneEmpresa,
+        client.pj_telefoneEmpresa,
+        client.pjData?.pj_telefoneRepresentante,
+        client.pjDadosEmpresa?.pj_telefoneRepresentante,
+        client.pjData?.pj_whatsappEmpresa,
+        client.pjDadosEmpresa?.pj_whatsappEmpresa,
+        client.pj_whatsappEmpresa
       ];
 
   for (const raw of candidates) {
@@ -95,17 +127,28 @@ export function isPhoneNotOwned(client: any): boolean {
     ? [
         client.pjData?.pj_telefoneEmpresa,
         client.pjDadosEmpresa?.pj_telefoneEmpresa,
+        client.pjContatoEmpresa?.pj_telefoneEmpresa,
         client.pj_telefoneEmpresa,
         client.phone,
         client.telefone
       ]
     : [
+        client.pfData?.pf_telefone,
+        client.pfDadosPessoais?.pf_telefone,
+        client.pf_telefone,
         client.pfData?.pf_telefoneCelular,
         client.pfDadosPessoais?.pf_telefoneCelular,
         client.pf_telefoneCelular,
         client.pfData?.pf_whatsapp,
         client.pfDadosPessoais?.pf_whatsapp,
         client.pf_whatsapp,
+        client.pfContato?.pf_telefone,
+        client.pfContato?.pf_telefoneCelular,
+        client.pfContato?.pf_whatsapp,
+        client.pfContato?.telefone,
+        client.pfContato?.whatsapp,
+        client.portalMirror?.pfContato?.telefone,
+        client.portalMirror?.pfContato?.whatsapp,
         client.phone,
         client.telefone
       ];
@@ -388,7 +431,7 @@ export function buildOnboardingExecutionPlan(clientData: ClientOnboardingData, o
   let step8Status: OnboardingStepStatus = 'available';
   let step8Reason = '';
 
-  if (audState.status === 'Onboarding completo ✅' || audState.status === 'completed') {
+  if (audState.status === 'Onboarding completo ✅' || audState.status === 'completed' || audState.statusFinal === 'Onboarding completo ✅') {
     step8Status = 'completed';
   }
 
@@ -463,7 +506,7 @@ export function buildOnboardingExecutionPlan(clientData: ClientOnboardingData, o
       status: step8Status,
       reason: step8Reason,
       technicalStatus: audState.status || 'pending',
-      humanCertified: audState.status === 'completed',
+      humanCertified: audState.status === 'completed' || audState.statusFinal === 'Onboarding completo ✅' || audState.humanCertified === true,
     },
   ];
 }

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import FluxoStepLayout from './components/FluxoStepLayout';
+import { extractClientPhone } from './onboardingHelper';
 import {
   ArrowLeft,
   Save,
@@ -99,15 +100,7 @@ export default function OnboardingWelcomeZap() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const getClientPhone = () => {
-    if (!client) return '';
-    if (client.type === 'PJ' || client.tipoPessoa === 'PJ' || client.isCompany === true) {
-      return client.pjDadosEmpresa?.pj_telefoneEmpresa || client.pjData?.pj_telefoneEmpresa || client.pjDadosEmpresa?.pj_telefoneRepresentante || client.pjData?.pj_telefoneRepresentante || client.phone || '';
-    }
-    return client.pfDadosPessoais?.pf_telefoneCelular || client.pfData?.pf_telefoneCelular || client.phone || '';
-  };
-
-  const phoneInformed = getClientPhone();
+  const phoneInformed = extractClientPhone(client);
 
   const resolvedClientName = client
     ? (client.type === 'PJ' || client.tipoPessoa === 'PJ' || client.isCompany === true

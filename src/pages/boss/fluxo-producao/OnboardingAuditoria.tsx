@@ -162,6 +162,8 @@ export default function OnboardingAuditoria() {
         auditoria: {
           ...existingOnboarding.auditoria,
           ...formData,
+          status: formData.statusFinal === 'Onboarding completo ✅' ? 'completed' : 'pending',
+          humanCertified: formData.statusFinal === 'Onboarding completo ✅',
           auditedAt: now
         }
       };
