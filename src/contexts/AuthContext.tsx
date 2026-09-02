@@ -60,7 +60,15 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(() => {
+    const cached = safeSessionGet('boss_cached_profile');
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (e) {}
+    }
+    return null;
+  });
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [googleAccessToken, setGoogleAccessToken] = useState<string | null>(() => {
@@ -134,28 +142,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(firebaseUser);
       setErrorMsg(null);
       if (firebaseUser) {
-        try {
-          // Synchronize session token with backend Express cookie session
-          const idToken = await firebaseUser.getIdToken();
-          await fetch('/api/auth/session', {
+        // Fast path: if profile is already in session cache for this user, unlock loading immediately
+        const cachedStr = safeSessionGet('boss_cached_profile');
+        if (cachedStr) {
+          try {
+            const cached = JSON.parse(cachedStr);
+            if (cached.email === firebaseUser.email) {
+              setProfile(cached);
+              setLoading(false);
+            }
+          } catch (e) {}
+        }
+
+        // Asynchronously sync session token with backend Express cookie session (non-blocking)
+        firebaseUser.getIdToken().then((idToken) => {
+          fetch('/api/auth/session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ idToken })
-          });
+          }).catch((err) => console.warn('[AuthContext] Session sync warning:', err));
+        }).catch((err) => console.warn('[AuthContext] getIdToken warning:', err));
 
+        try {
           const matchedProfile = await resolveUserProfile(firebaseUser);
           setProfile(matchedProfile);
+          if (matchedProfile) {
+            safeSessionSet('boss_cached_profile', JSON.stringify(matchedProfile));
+          }
         } catch (error: any) {
           setErrorMsg(error.message || "Erro de permissão no Firebase");
-          setProfile(null);
+          setProfile((prev) => prev || null);
         }
       } else {
         setProfile(null);
-        // Clear backend session cookie
-        try {
-          await fetch('/api/auth/logout', { method: 'POST' });
-        } catch (err) {
-          console.warn('[AuthContext] Falha ao limpar sessão no backend:', err);
+        safeSessionRemove('boss_cached_profile');
+        // Clear backend session cookie non-blockingly only if a token was stored
+        if (safeSessionGet('google_access_token')) {
+          fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
         }
       }
       setLoading(false);
@@ -201,6 +224,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error("Não foi possível carregar seu perfil no sistema.");
       }
       setProfile(matchedProfile);
+      safeSessionSet('boss_cached_profile', JSON.stringify(matchedProfile));
     } catch (error: any) {
       console.error("Login falhou:", error);
       let friendlyMessage = error.message || "Falha na autenticação via Google";
@@ -257,6 +281,7 @@ Para corrigir este erro de permissão:
   const logout = async () => {
     setErrorMsg(null);
     setProfile(null);
+    safeSessionRemove('boss_cached_profile');
     setGoogleAccessToken(null);
     safeSessionRemove('google_access_token');
     await signOut(auth);

@@ -114,12 +114,7 @@ export default function OnboardingSubetapasCard({ caseId }: OnboardingSubetapasC
   };
 
   const handleStepClick = (step: OnboardingStepPlan, index: number) => {
-    // Blocks future steps click
-    if (index > firstIncompleteIndex && step.id !== activeStepId) {
-      alert("Esta subetapa está futura e permanece bloqueada até a conclusão ou dispensa das anteriores.");
-      return;
-    }
-    // Allow navigation to completed, dispensed, or active steps
+    // Allow free navigation to any step for consultation, review, and editing without any blocking alerts.
     navigate(`/boss-giffoni-clientes/fluxo-producao/${caseId}/${step.route}`);
   };
 
@@ -151,14 +146,41 @@ export default function OnboardingSubetapasCard({ caseId }: OnboardingSubetapasC
 
       {/* HORIZONTAL FLOW CONTAINER */}
       <div className="bg-white border border-gray-150 rounded-[2rem] p-6 shadow-xs space-y-4">
-        <div>
-          <h3 className="text-xs font-black text-gray-900 tracking-wider uppercase flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 animate-pulse"></span>
-            Fluxo de Onboarding (Acolhimento)
-          </h3>
-          <p className="text-[11px] text-gray-400 font-semibold mt-0.5">
-            Acompanhe o progresso sequencial obrigatório de 1 a 8. Cards futuros permanecem bloqueados.
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 className="text-xs font-black text-gray-900 tracking-wider uppercase flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 animate-pulse"></span>
+              Fluxo de Onboarding (Acolhimento)
+            </h3>
+            <p className="text-[11px] text-gray-400 font-semibold mt-0.5">
+              Acompanhe o progresso sequencial obrigatório de 1 a 8. Clique em qualquer card para consultar, revisar ou editar.
+            </p>
+          </div>
+
+          {/* Onboarding progress percentage */}
+          {executionPlan && executionPlan.length > 0 && (
+            <div className="flex items-center gap-2 shrink-0 bg-slate-50 border border-gray-100 px-3 py-1.5 rounded-2xl">
+              <div className="text-right">
+                <span className="text-[8px] font-black uppercase text-gray-400 block tracking-wider leading-none">
+                  Progresso do Onboarding
+                </span>
+                <span className="text-[9px] text-gray-500 font-bold mt-1 block">
+                  {executionPlan.filter(s => s.status === 'completed' || s.status === 'dispensed_not_owned' || s.status === 'dispensed_no_channel').length} de {executionPlan.length} etapas
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 bg-white border border-gray-150 px-2.5 py-1 rounded-xl">
+                <span className="text-xs font-black text-indigo-600 font-mono">
+                  {Math.round((executionPlan.filter(s => s.status === 'completed' || s.status === 'dispensed_not_owned' || s.status === 'dispensed_no_channel').length / executionPlan.length) * 100)}%
+                </span>
+                <div className="w-12 bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                  <div 
+                    className="bg-indigo-600 h-full rounded-full transition-all duration-300" 
+                    style={{ width: `${Math.round((executionPlan.filter(s => s.status === 'completed' || s.status === 'dispensed_not_owned' || s.status === 'dispensed_no_channel').length / executionPlan.length) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-1.5 pt-1">
@@ -168,8 +190,8 @@ export default function OnboardingSubetapasCard({ caseId }: OnboardingSubetapasC
             const isCompleted = step.status === 'completed';
             const isDispensed = step.status === 'dispensed_not_owned' || step.status === 'dispensed_no_channel';
             
-            // A step is future/blocked if its index is greater than the first incomplete index (unless it is current)
-            const isBlocked = index > firstIncompleteIndex && !isCurrent;
+            // Sequential block is disabled for clicking, cards are always clickable.
+            const isBlocked = false;
 
             let btnClass = '';
             let iconBgClass = '';
@@ -183,11 +205,8 @@ export default function OnboardingSubetapasCard({ caseId }: OnboardingSubetapasC
             } else if (isDispensed) {
               btnClass = 'bg-gray-50/70 border-gray-150 text-gray-400 hover:bg-gray-50';
               iconBgClass = 'bg-gray-100 text-gray-400';
-            } else if (isBlocked) {
-              btnClass = 'bg-gray-100/50 border-gray-100 text-gray-400 opacity-60 cursor-not-allowed';
-              iconBgClass = 'bg-gray-100 text-gray-400';
             } else {
-              // Available but pending
+              // Available/pending/failed
               btnClass = 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300';
               iconBgClass = 'bg-gray-100 text-gray-500';
             }
@@ -202,7 +221,6 @@ export default function OnboardingSubetapasCard({ caseId }: OnboardingSubetapasC
 
                 <button
                   type="button"
-                  disabled={isBlocked}
                   onClick={() => handleStepClick(step, index)}
                   className={`flex flex-col justify-between p-3 border rounded-2xl text-left cursor-pointer outline-none relative overflow-hidden group min-w-[120px] max-w-[160px] flex-1 h-[95px] transition-all duration-200 ${btnClass}`}
                 >
@@ -219,9 +237,6 @@ export default function OnboardingSubetapasCard({ caseId }: OnboardingSubetapasC
                       <span className="text-[8px] font-extrabold uppercase px-1 py-0.5 rounded bg-gray-200 text-gray-500 scale-90">
                         Disp
                       </span>
-                    )}
-                    {isBlocked && (
-                      <Lock size={10} className="text-gray-400 shrink-0" />
                     )}
                   </div>
 
