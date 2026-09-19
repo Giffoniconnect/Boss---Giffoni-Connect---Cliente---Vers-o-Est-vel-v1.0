@@ -211,7 +211,13 @@ export default function DigitalizacaoUpload() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(bodyPayload)
       });
-      const data = await response.json();
+      const text = await response.text();
+      let data: any = {};
+      try {
+        data = text && text.trim() ? JSON.parse(text) : {};
+      } catch {
+        data = { success: false, errorMessage: text || 'Erro inesperado' };
+      }
       
       if (data.success === true && data.todoistTaskId) {
         await handleUpdateRespFields({
@@ -342,7 +348,13 @@ export default function DigitalizacaoUpload() {
         })
       });
 
-      const resData = await response.json();
+      const text = await response.text();
+      let resData: any = {};
+      try {
+        resData = text && text.trim() ? JSON.parse(text) : {};
+      } catch {
+        resData = { success: false, errorMessage: text || 'Falha na resposta do servidor' };
+      }
       if (!response.ok || !resData.success) {
         throw new Error(resData.errorMessage || 'Falha ao enviar arquivo para o Google Drive através do Gateway');
       }

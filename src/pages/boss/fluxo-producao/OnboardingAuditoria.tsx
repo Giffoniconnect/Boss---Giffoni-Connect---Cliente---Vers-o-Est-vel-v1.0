@@ -10,6 +10,7 @@ import {
 } from './onboardingHelper';
 import {
   ArrowLeft,
+  ArrowRight,
   Save,
   Loader2,
   AlertCircle,
@@ -140,7 +141,7 @@ export default function OnboardingAuditoria() {
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (advanceAfter = false) => {
     if (!caseId) return;
     setSaving(true);
     setError(null);
@@ -190,6 +191,7 @@ export default function OnboardingAuditoria() {
       // If approved, update standard field for step tracking
       if (formData.statusFinal === 'Onboarding completo ✅' && formData.aprovadoLiberacaoProducao === 'sim') {
         updatePayload.onboardingCompleted = true;
+        updatePayload.productionStage = 'dados-caso';
       }
 
       await updateDoc(doc(db, 'cases', caseId!), updatePayload);
@@ -199,10 +201,17 @@ export default function OnboardingAuditoria() {
         ...prev,
         onboarding: updatedOnboarding,
         onboardingSubetapaLogs: updatedLogs,
-        onboardingCompleted: updatePayload.onboardingCompleted || prev.onboardingCompleted
+        onboardingCompleted: updatePayload.onboardingCompleted || prev.onboardingCompleted,
+        productionStage: updatePayload.productionStage || prev.productionStage
       }));
 
       setSuccess('Auditoria de onboarding atualizada e homologada com absoluto sucesso!');
+
+      if (advanceAfter || (formData.statusFinal === 'Onboarding completo ✅' && formData.aprovadoLiberacaoProducao === 'sim')) {
+        setTimeout(() => {
+          navigate(`/boss-giffoni-clientes/fluxo-producao/${caseId}/dados-caso`);
+        }, 800);
+      }
     } catch (err: any) {
       console.error(err);
       setError(`Erro ao salvar dados de auditoria: ${err.message || err}`);
@@ -413,22 +422,33 @@ export default function OnboardingAuditoria() {
           </div>
 
           {/* ACTION BUTTON FOOTER */}
-          <div className="flex justify-end gap-3 border-t border-gray-100 pt-5">
+          <div className="flex flex-col sm:flex-row justify-end gap-3 border-t border-gray-100 pt-5">
             <button
               type="button"
               disabled={saving}
-              onClick={handleSave}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gray-900 hover:bg-indigo-950 text-white font-black text-[11px] uppercase tracking-wider rounded-2xl cursor-pointer transition-all disabled:opacity-50 h-[48px]"
+              onClick={() => handleSave(false)}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white border border-gray-250 hover:bg-gray-50 text-gray-800 font-bold text-xs rounded-2xl cursor-pointer transition-all disabled:opacity-50 h-[48px]"
+            >
+              {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+              <span>Salvar Parecer</span>
+            </button>
+
+            <button
+              type="button"
+              disabled={saving || formData.statusFinal !== 'Onboarding completo ✅' || formData.aprovadoLiberacaoProducao !== 'sim'}
+              onClick={() => handleSave(true)}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gray-950 hover:bg-black text-white font-bold text-xs rounded-2xl cursor-pointer transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-md h-[48px]"
             >
               {saving ? (
                 <>
-                  <Loader2 size={12} className="animate-spin" />
-                  <span>Salvando Parecer...</span>
+                  <Loader2 size={14} className="animate-spin" />
+                  <span>Processando...</span>
                 </>
               ) : (
                 <>
-                  <Save size={12} />
-                  <span>Registrar Parecer Auditoria</span>
+                  <ShieldCheck size={14} />
+                  <span>Salvar e Continuar (Entrevista 5W2H)</span>
+                  <ArrowRight size={14} />
                 </>
               )}
             </button>

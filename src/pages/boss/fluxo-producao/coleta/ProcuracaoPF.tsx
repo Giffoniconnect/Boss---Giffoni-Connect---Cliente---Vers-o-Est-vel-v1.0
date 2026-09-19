@@ -973,7 +973,13 @@ export default function ProcuracaoPF() {
                     })
                   });
 
-                  const data = await response.json();
+                  const text = await response.text();
+                  let data: any = {};
+                  try {
+                    data = text && text.trim() ? JSON.parse(text) : {};
+                  } catch {
+                    data = { success: false, errorMessage: text || 'Falha ao enviar arquivo para o Google Drive' };
+                  }
                   if (!response.ok || !data.success) {
                     throw new Error(data.errorMessage || 'Falha ao enviar arquivo para o Google Drive');
                   }

@@ -11,9 +11,42 @@ export interface FlowStep {
 
 export const flowSteps: FlowStep[] = [
   { id: 'cadastro', label: '1.1/1.2 Cadastro (PF/PJ)', routeKey: 'cadastro', requiresCaseId: false, order: 1 },
-  { id: 'onboarding', label: 'Onboarding ✈️', routeKey: 'onboarding', requiresCaseId: true, order: 2, matchPaths: ['/boss-giffoni-clientes/fluxo-producao/:caseId/onboarding'] },
-  { id: 'dados-caso', label: '1.3/1.3.1 Entrevista (5W2H)', routeKey: 'dadosCaso', requiresCaseId: true, order: 3 },
-  { id: 'tipo-producao', label: '1.3.2 Tipo de Serviço', routeKey: 'tipoServico', requiresCaseId: true, order: 4, matchPaths: ['/boss-giffoni-clientes/fluxo-producao/:caseId/tipo-producao'] },
+  { 
+    id: 'onboarding', 
+    label: 'Onboarding ✈️', 
+    routeKey: 'onboarding', 
+    requiresCaseId: true, 
+    order: 2, 
+    matchPaths: [
+      '/boss-giffoni-clientes/fluxo-producao/:caseId/onboarding',
+      '/boss-giffoni-clientes/fluxo-producao/:caseId/add.telefone.do.cliente',
+      '/boss-giffoni-clientes/fluxo-producao/:caseId/welcome.zap',
+      '/boss-giffoni-clientes/fluxo-producao/:caseId/add.cliente.no.instagram',
+      '/boss-giffoni-clientes/fluxo-producao/:caseId/add.cliente.no.facebook',
+      '/boss-giffoni-clientes/fluxo-producao/:caseId/add.cliente.no.tiktok',
+      '/boss-giffoni-clientes/fluxo-producao/:caseId/enviar.email.cliente',
+      '/boss-giffoni-clientes/fluxo-producao/:caseId/avaliacard',
+      '/boss-giffoni-clientes/fluxo-producao/:caseId/auditoria.onboarding.cliente'
+    ] 
+  },
+  { id: 'dados-caso', label: '1.3/1.3.1 Entrevista (5W2H)', routeKey: 'dadosCaso', requiresCaseId: true, order: 3, matchPaths: ['/boss-giffoni-clientes/fluxo-producao/:caseId/dados-caso'] },
+  { 
+    id: 'tipo-producao', 
+    label: '1.3.2 Tipo de Serviço', 
+    routeKey: 'tipoServico', 
+    requiresCaseId: true, 
+    order: 4, 
+    matchPaths: [
+      '/boss-giffoni-clientes/fluxo-producao/:caseId/tipo-producao',
+      '/boss-giffoni-clientes/fluxo-producao/:caseId/tipo-producao/judicial',
+      '/boss-giffoni-clientes/fluxo-producao/:caseId/tipo-producao/extrajudicial',
+      '/boss-giffoni-clientes/fluxo-producao/:caseId/tipo-producao/peticao-inicial',
+      '/boss-giffoni-clientes/fluxo-producao/:caseId/tipo-producao/peticao_inicial',
+      '/boss-giffoni-clientes/fluxo-producao/:caseId/tipo-producao/processo-judicial-em-andamento',
+      '/boss-giffoni-clientes/fluxo-producao/:caseId/tipo-producao/requerimento-administrativo',
+      '/boss-giffoni-clientes/fluxo-producao/:caseId/tipo-producao/outro-servico-administrativo'
+    ] 
+  },
   { id: 'financeiro', label: 'Financeiro (Faturamento)', routeKey: 'financeiro', requiresCaseId: true, order: 5, matchPaths: ['/boss-giffoni-clientes/fluxo-producao/:caseId/financeiro'] },
   { 
     id: 'solicitacoes-provas', 

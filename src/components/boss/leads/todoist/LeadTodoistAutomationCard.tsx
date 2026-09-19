@@ -170,7 +170,13 @@ export const LeadTodoistAutomationCard: React.FC<LeadTodoistAutomationCardProps>
         body: JSON.stringify(payload)
       });
 
-      const resData = await res.json();
+      const resText = await res.text();
+      let resData: any = {};
+      try {
+        resData = resText && resText.trim() ? JSON.parse(resText) : {};
+      } catch {
+        resData = { success: false, message: resText || 'Erro inesperado ao criar tarefa' };
+      }
       if (!res.ok || !resData.success) {
         if (resData.error === "TODOIST_SECRET_MISSING") {
           throw new Error("O token de API do Todoist (TODOIST_API_TOKEN) não foi configurado de forma segura no ambiente.");

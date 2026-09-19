@@ -392,7 +392,13 @@ export default function ContratoHonorariosPF() {
         body: JSON.stringify(payload)
       });
       
-      const responseData = await response.json();
+      const text = await response.text();
+      let responseData: any = {};
+      try {
+        responseData = text && text.trim() ? JSON.parse(text) : {};
+      } catch {
+        responseData = { success: false, errorMessage: text || "Falha ao gerar prévia" };
+      }
       if (!response.ok || !responseData.success) {
         throw new Error(responseData.errorMessage || responseData.error || "Falha ao gerar prévia");
       }
@@ -798,7 +804,13 @@ export default function ContratoHonorariosPF() {
                     })
                   });
 
-                  const data = await response.json();
+                  const text = await response.text();
+                  let data: any = {};
+                  try {
+                    data = text && text.trim() ? JSON.parse(text) : {};
+                  } catch {
+                    data = { success: false, errorMessage: text || 'Falha ao enviar arquivo para o Google Drive' };
+                  }
                   if (!response.ok || !data.success) {
                     throw new Error(data.errorMessage || 'Falha ao enviar arquivo para o Google Drive');
                   }

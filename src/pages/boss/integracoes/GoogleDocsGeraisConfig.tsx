@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { doc, getDoc, setDoc, collection, getDocs, limit, query } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import { useAuth } from '../../../contexts/AuthContext';
+import { safeResponseJson } from '../../../lib/safeJson';
 
 import { BossLayout } from '../../../components/Layout';
 import { 
@@ -151,7 +152,7 @@ export default function GoogleDocsGeraisConfig() {
           }
         })
       });
-      const data = await res.json();
+      const data = await safeResponseJson(res);
       if (res.ok && data.success) {
         setCamadaZero(prev => ({ ...prev, googleAuth: 'ok' }));
         setFeedback({ type: 'success', message: 'Autenticação de Teste Google OK! Servidor aceitou chaves do override!' });
@@ -293,7 +294,7 @@ export default function GoogleDocsGeraisConfig() {
     // 1. Firestore test
     try {
       const fsRes = await fetch('/api/system/firestore-health');
-      const fsData = await fsRes.json();
+      const fsData = await safeResponseJson(fsRes);
       setDiagnosticsContent(fsData);
       if (fsRes.ok && fsData.success) {
         setCamadaZero(prev => ({ ...prev, firestore: 'ok' }));
@@ -329,7 +330,7 @@ export default function GoogleDocsGeraisConfig() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ credentialOverride, googleAccessToken })
       });
-      const authData = await authRes.json();
+      const authData = await safeResponseJson(authRes);
       if (authRes.ok && authData.success) {
         setCamadaZero(prev => ({ ...prev, googleAuth: 'ok' }));
         messages.googleAuth = `Chave ativa: ${authData.serviceAccountEmail || 'OK'} (${authData.credentialSource || 'carregado'})`;
@@ -350,7 +351,7 @@ export default function GoogleDocsGeraisConfig() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ templateId: targetTemplateIdForApiCheck, credentialOverride, googleAccessToken })
       });
-      const apiData = await apiRes.json();
+      const apiData = await safeResponseJson(apiRes);
       if (apiRes.ok && apiData.success) {
         setCamadaZero(prev => ({ ...prev, driveApi: 'ok', docsApi: 'ok' }));
         messages.driveApi = 'API Google Drive ativada e conectável.';
@@ -375,7 +376,7 @@ export default function GoogleDocsGeraisConfig() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ templateId: currentTemplateId, credentialOverride, googleAccessToken })
         });
-        const templData = await templRes.json();
+        const templData = await safeResponseJson(templRes);
         if (templRes.ok && templData.success) {
           setCamadaZero(prev => ({ ...prev, template: 'ok' }));
           messages.template = `Leitura de "${templData.templateName || 'Procuração PF'}" confirmada!`;
@@ -401,7 +402,7 @@ export default function GoogleDocsGeraisConfig() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ destinationFolderId: targetFolderId, credentialOverride, googleAccessToken })
         });
-        const foldData = await foldRes.json();
+        const foldData = await safeResponseJson(foldRes);
         if (foldRes.ok && foldData.success) {
           setCamadaZero(prev => ({ ...prev, folder: 'ok' }));
           messages.folder = `Permissão de escrita em "${foldData.folderName || 'Pasta'}" confirmada!`;
@@ -434,7 +435,7 @@ export default function GoogleDocsGeraisConfig() {
           googleAccessToken
         })
       });
-      const preData = await preRes.json();
+      const preData = await safeResponseJson(preRes);
       if (preRes.ok && preData.success) {
         setCamadaZero(prev => ({ ...prev, preflight: 'ok' }));
         messages.preflight = 'Preflight liberado! Toda a cadeia de saúde integrada está operacional.';
@@ -484,7 +485,7 @@ export default function GoogleDocsGeraisConfig() {
         })
       });
 
-      const data = await response.json();
+      const data = await safeResponseJson(response);
       setDiagnosticsContent(data);
 
       if (response.ok && data.success) {
@@ -527,7 +528,7 @@ export default function GoogleDocsGeraisConfig() {
     setCheckingCamadaZero(true);
     try {
       const fsRes = await fetch('/api/system/firestore-health');
-      const fsData = await fsRes.json();
+      const fsData = await safeResponseJson(fsRes);
       setDiagnosticsContent(fsRes.ok ? fsData : { error: true, data: fsData });
       if (fsRes.ok && fsData.success) {
         setCamadaZero(prev => ({ ...prev, firestore: 'ok' }));
@@ -557,7 +558,7 @@ export default function GoogleDocsGeraisConfig() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ credentialOverride, googleAccessToken })
       });
-      const authData = await authRes.json();
+      const authData = await safeResponseJson(authRes);
       if (authRes.ok && authData.success) {
         setCamadaZero(prev => ({ ...prev, googleAuth: 'ok' }));
         setFeedback({ type: 'success', message: `Google Auth conectado com sucesso: ${authData.serviceAccountEmail}` });
@@ -580,7 +581,7 @@ export default function GoogleDocsGeraisConfig() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ templateId: templates.procuracao_pf, credentialOverride, googleAccessToken })
       });
-      const apiData = await apiRes.json();
+      const apiData = await safeResponseJson(apiRes);
       if (apiRes.ok && apiData.success) {
         setCamadaZero(prev => ({ ...prev, driveApi: 'ok', docsApi: 'ok' }));
         setFeedback({ type: 'success', message: 'Drive e Docs APIs ativas e aceitando tráfego.' });
@@ -605,7 +606,7 @@ export default function GoogleDocsGeraisConfig() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ templateId: templates.procuracao_pf, credentialOverride, googleAccessToken })
       });
-      const templData = await templRes.json();
+      const templData = await safeResponseJson(templRes);
       if (templRes.ok && templData.success) {
         setCamadaZero(prev => ({ ...prev, template: 'ok' }));
         setFeedback({ type: 'success', message: `ID de Template validado com sucesso: "${templData.templateName}"` });
@@ -628,7 +629,7 @@ export default function GoogleDocsGeraisConfig() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ destinationFolderId: driveFolderId, credentialOverride, googleAccessToken })
       });
-      const foldData = await foldRes.json();
+      const foldData = await safeResponseJson(foldRes);
       if (foldRes.ok && foldData.success) {
         setCamadaZero(prev => ({ ...prev, folder: 'ok' }));
         setFeedback({ type: 'success', message: `Pasta destino validada e com gravação ativa: "${foldData.folderName}"` });
@@ -660,7 +661,7 @@ export default function GoogleDocsGeraisConfig() {
           googleAccessToken
         })
       });
-      const preData = await preRes.json();
+      const preData = await safeResponseJson(preRes);
       if (preRes.ok && preData.success) {
         setCamadaZero(prev => ({ ...prev, preflight: 'ok' }));
         setFeedback({ type: 'success', message: 'Preflight executado ponta a ponta com êxito!' });
@@ -754,7 +755,7 @@ export default function GoogleDocsGeraisConfig() {
         })
       });
 
-      const result = await response.json();
+      const result = await safeResponseJson(response);
       if (response.ok && result.success) {
         addLog("REPLACE", "Leitura e troca de marcadores operada pelo motor interno com sucesso!");
         addLog("DRIVE", `Arquivo criado com ID: ${result.googleDocId}. Pasta de destino confirmada.`);

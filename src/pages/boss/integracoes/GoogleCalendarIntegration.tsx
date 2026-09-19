@@ -55,7 +55,8 @@ export default function GoogleCalendarIntegration() {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
       if (res.ok) {
-        const data = await res.json();
+        const text = await res.text();
+        const data = text && text.trim() ? JSON.parse(text) : {};
         if (data.items) {
           setGoogleCalendars(data.items);
         }
@@ -161,7 +162,8 @@ export default function GoogleCalendarIntegration() {
         throw new Error(`Erro ao obter lista de agendas: ${resList.statusText} (${resList.status})`);
       }
 
-      const listData = await resList.json();
+      const listText = await resList.text();
+      const listData = listText && listText.trim() ? JSON.parse(listText) : {};
       const calendars = listData.items || [];
       setGoogleCalendars(calendars);
       addLog(`SUCESSO: ${calendars.length} agendas fáticas encontradas na conta Google.`);
@@ -179,7 +181,8 @@ export default function GoogleCalendarIntegration() {
         throw new Error(`Erro ao listar compromissos: ${resEvents.statusText} (${resEvents.status})`);
       }
 
-      const eventsData = await resEvents.json();
+      const eventsText = await resEvents.text();
+      const eventsData = eventsText && eventsText.trim() ? JSON.parse(eventsText) : {};
       const events = eventsData.items || [];
       addLog(`SUCESSO: Encontrados ${events.length} compromissos na agenda.`);
       events.forEach((ev: any) => {
@@ -215,7 +218,8 @@ export default function GoogleCalendarIntegration() {
         throw new Error(`Erro ao criar compromisso de teste: ${resCreate.statusText} (${resCreate.status})`);
       }
 
-      const createdEvent = await resCreate.json();
+      const createdText = await resCreate.text();
+      const createdEvent = createdText && createdText.trim() ? JSON.parse(createdText) : {};
       addLog(`SUCESSO: Compromisso de teste criado com ID: ${createdEvent.id}`);
       addLog(`Link do compromisso no Google Agenda: ${createdEvent.htmlLink}`);
 

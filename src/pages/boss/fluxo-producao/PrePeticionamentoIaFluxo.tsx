@@ -292,7 +292,13 @@ ${caseObj?.edrp?.structuring?.risks || 'Nenhum risco crítico mapeado.'}
         throw new Error('Falha técnica no serviço de IA do servidor.');
       }
 
-      const data = await response.json();
+      const resText = await response.text();
+      let data: any = {};
+      try {
+        data = resText && resText.trim() ? JSON.parse(resText) : {};
+      } catch {
+        data = {};
+      }
       if (data && data.text) {
         setAiResult(data.text);
         addLog('success', 'GENERATION_COMPLETE', `Rascunho jurídico gerado com sucesso pelo modelo. Tamanho: ${data.text.length} caracteres.`);

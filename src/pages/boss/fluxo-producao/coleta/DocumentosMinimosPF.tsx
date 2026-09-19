@@ -132,7 +132,13 @@ export default function DocumentosMinimosPF() {
         })
       });
 
-      const data = await res.json();
+      const text = await res.text();
+      let data: any = {};
+      try {
+        data = text && text.trim() ? JSON.parse(text) : {};
+      } catch {
+        data = { success: false, message: text || 'Erro inesperado' };
+      }
       if (!res.ok || !data.success) {
         if (data.error === "TODOIST_SECRET_MISSING") {
           setTodoistSuccess("Pronto! Integração com API v1 validada com sucesso. (Como o TODOIST_API_TOKEN não está configurado na máquina/ambiente, o simulador local processou o envio perfeitamente!)");
@@ -271,7 +277,13 @@ export default function DocumentosMinimosPF() {
         })
       });
 
-      const data = await response.json();
+      const text = await response.text();
+      let data: any = {};
+      try {
+        data = text && text.trim() ? JSON.parse(text) : {};
+      } catch {
+        data = { success: false, errorMessage: text || 'Falha ao acionar gerador do Google Docs' };
+      }
       if (!response.ok || !data.success) {
         throw new Error(data.errorMessage || 'Falha ao acionar gerador do Google Docs');
       }
@@ -346,7 +358,13 @@ export default function DocumentosMinimosPF() {
           })
         });
 
-        const data = await response.json();
+        const text = await response.text();
+        let data: any = {};
+        try {
+          data = text && text.trim() ? JSON.parse(text) : {};
+        } catch {
+          data = { success: false, errorMessage: text || 'Falha ao enviar arquivo para o Google Drive' };
+        }
         if (!response.ok || !data.success) {
           throw new Error(data.errorMessage || 'Falha ao enviar arquivo para o Google Drive');
         }

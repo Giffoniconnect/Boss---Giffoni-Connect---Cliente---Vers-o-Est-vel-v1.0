@@ -95,7 +95,8 @@ export default function DocumentosNecessidadePJ() {
     if (cleaned.length === 8) {
       try {
         const response = await fetch(`https://viacep.com.br/ws/${cleaned}/json/`);
-        const data = await response.json();
+        const text = await response.text();
+        const data = text && text.trim() ? JSON.parse(text) : {};
         if (!data.erro) {
           if (type === 'res') {
             setWitnessResRua(data.logradouro || '');

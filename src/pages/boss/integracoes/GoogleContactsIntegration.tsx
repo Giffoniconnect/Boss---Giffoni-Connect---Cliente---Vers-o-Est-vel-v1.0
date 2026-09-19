@@ -56,7 +56,8 @@ export default function GoogleContactsIntegration() {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
       if (res.ok) {
-        const data = await res.json();
+        const text = await res.text();
+        const data = text && text.trim() ? JSON.parse(text) : {};
         if (data.connections) {
           setGoogleContacts(data.connections);
         }
@@ -180,7 +181,8 @@ export default function GoogleContactsIntegration() {
         throw new Error(`Erro ao obter contatos: ${resList.statusText} (${resList.status})`);
       }
 
-      const listData = await resList.json();
+      const listText = await resList.text();
+      const listData = listText && listText.trim() ? JSON.parse(listText) : {};
       const connections = listData.connections || [];
       setGoogleContacts(connections);
       addLog(`SUCESSO: ${connections.length} contatos fáticos encontrados na conta Google.`);
@@ -251,7 +253,8 @@ export default function GoogleContactsIntegration() {
         throw new Error(`Erro na criação do contato: ${res.statusText} (${res.status})`);
       }
 
-      const created = await res.json();
+      const createdText = await res.text();
+      const created = createdText && createdText.trim() ? JSON.parse(createdText) : {};
       addLog(`SUCESSO: Contato [${client.name}] sincronizado faticamente no Google Contatos.`);
       addLog(`ResourceName retornado: ${created.resourceName}`);
 

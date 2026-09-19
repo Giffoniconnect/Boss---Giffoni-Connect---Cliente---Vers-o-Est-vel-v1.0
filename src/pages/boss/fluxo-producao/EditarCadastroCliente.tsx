@@ -574,7 +574,7 @@ export default function EditarCadastroCliente() {
 
       setTimeout(() => {
         if (advanceAfter) {
-          navigate(flowRoutes.dadosCaso(caseId!));
+          navigate(flowRoutes.onboarding(caseId!));
         }
       }, 800);
 
@@ -1252,7 +1252,7 @@ export default function EditarCadastroCliente() {
                   ) : (
                     <>
                       <ShieldCheck size={14} />
-                      <span>Salvar e Avançar</span>
+                      <span>Salvar e Continuar</span>
                       <ArrowRight size={14} />
                     </>
                   )}

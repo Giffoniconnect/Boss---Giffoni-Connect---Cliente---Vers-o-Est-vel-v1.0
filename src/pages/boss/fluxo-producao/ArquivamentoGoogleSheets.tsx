@@ -224,7 +224,13 @@ export default function ArquivamentoGoogleSheets() {
         throw new Error(`Erro ao criar planilha: ${response.statusText} (${response.status})`);
       }
 
-      const data = await response.json();
+      const text = await response.text();
+      let data: any = {};
+      try {
+        data = text && text.trim() ? JSON.parse(text) : {};
+      } catch {
+        data = {};
+      }
       const newId = data.spreadsheetId;
       setSpreadsheetId(newId);
       addLog(`Planilha criada com sucesso! ID: ${newId}`);
@@ -350,7 +356,13 @@ export default function ArquivamentoGoogleSheets() {
         throw new Error(`Erro de resposta do Google Sheets API: ${response.statusText} (${response.status})`);
       }
 
-      const result = await response.json();
+      const resultText = await response.text();
+      let result: any = {};
+      try {
+        result = resultText && resultText.trim() ? JSON.parse(resultText) : {};
+      } catch {
+        result = {};
+      }
       addLog('Sincronização efetuada com sucesso!');
 
       const updatedRange = result.updates?.updatedRange || 'Linha desconhecida';

@@ -52,7 +52,30 @@ export const fetchCEP = async (cep: string) => {
   try {
     const response = await fetch(`https://brasilapi.com.br/api/cep/v1/${cleanedCep}`);
     if (response.ok) {
-      return await response.json();
+      const text = await response.text();
+      if (text && text.trim()) {
+        try {
+          return JSON.parse(text);
+        } catch {
+          // Continue to fallback
+        }
+      }
+    }
+    // Fallback to viacep if BrasilAPI fails or returns empty/non-JSON
+    const viaRes = await fetch(`https://viacep.com.br/ws/${cleanedCep}/json/`);
+    if (viaRes.ok) {
+      const viaText = await viaRes.text();
+      if (viaText && viaText.trim()) {
+        const viaData = JSON.parse(viaText);
+        if (!viaData.erro) {
+          return {
+            street: viaData.logradouro,
+            neighborhood: viaData.bairro,
+            city: viaData.localidade,
+            state: viaData.uf
+          };
+        }
+      }
     }
   } catch (error) {
     console.error('Error fetching CEP:', error);
@@ -66,7 +89,14 @@ export const fetchCNPJ = async (cnpj: string) => {
   try {
     const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleanedCnpj}`);
     if (response.ok) {
-      return await response.json();
+      const text = await response.text();
+      if (text && text.trim()) {
+        try {
+          return JSON.parse(text);
+        } catch {
+          return null;
+        }
+      }
     }
   } catch (error) {
     console.error('Error fetching CNPJ:', error);

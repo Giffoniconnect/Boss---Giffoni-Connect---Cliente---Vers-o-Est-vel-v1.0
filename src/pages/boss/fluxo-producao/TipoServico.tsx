@@ -818,7 +818,13 @@ export default function TipoServico() {
     setTodoistProjectsSyncError('');
     try {
       const response = await fetch('/api/todoist/projects');
-      const data = await response.json();
+      const text = await response.text();
+      let data: any = {};
+      try {
+        data = text && text.trim() ? JSON.parse(text) : {};
+      } catch {
+        data = { success: false, errorMessage: text || 'Erro ao sincronizar projetos' };
+      }
       if (data.success && Array.isArray(data.projects)) {
         setSyncedProjectsList(data.projects);
         await appendFrontendLogs([
@@ -1021,7 +1027,13 @@ export default function TipoServico() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(bodyPayload)
       });
-      const data = await response.json();
+      const text = await response.text();
+      let data: any = {};
+      try {
+        data = text && text.trim() ? JSON.parse(text) : {};
+      } catch {
+        data = { verified: false, logs: [], errorMessage: text || 'Erro ao criar tarefa' };
+      }
 
       if (data && Array.isArray(data.logs)) {
         setTodoistLogs(prev => {
@@ -1063,7 +1075,13 @@ export default function TipoServico() {
                   parentId: data.todoistTaskId
                 })
               });
-              const subData = await subRes.json();
+              const subText = await subRes.text();
+              let subData: any = {};
+              try {
+                subData = subText && subText.trim() ? JSON.parse(subText) : {};
+              } catch {
+                subData = { success: false };
+              }
               if (subData.success && subData.todoistTaskId) {
                 createdSubtasks[i] = {
                   ...sub,
@@ -1186,7 +1204,13 @@ export default function TipoServico() {
             parentId: todoistTaskId
           })
         });
-        const data = await response.json();
+        const text = await response.text();
+        let data: any = {};
+        try {
+          data = text && text.trim() ? JSON.parse(text) : {};
+        } catch {
+          data = { success: false };
+        }
         if (data.success && data.todoistTaskId) {
           finalTaskId = data.todoistTaskId;
           await appendFrontendLogs([
@@ -1257,7 +1281,13 @@ export default function TipoServico() {
             content: newCommentText
           })
         });
-        const data = await response.json();
+        const text = await response.text();
+        let data: any = {};
+        try {
+          data = text && text.trim() ? JSON.parse(text) : {};
+        } catch {
+          data = { success: false };
+        }
         if (data.success) {
           await appendFrontendLogs([
             {

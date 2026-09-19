@@ -92,7 +92,8 @@ export async function fetchTodoistProjects(): Promise<any[]> {
   try {
     const res = await fetch('/api/todoist/projects');
     if (!res.ok) throw new Error('Falha ao buscar projetos do Todoist.');
-    const data = await res.json();
+    const text = await res.text();
+    const data = text && text.trim() ? JSON.parse(text) : {};
     return data.success && Array.isArray(data.projects) ? data.projects : [];
   } catch (err) {
     console.error('[Todoist Service] Error fetching projects:', err);
@@ -106,7 +107,8 @@ export async function fetchTodoistSections(projectId: string): Promise<any[]> {
   try {
     const res = await fetch(`/api/todoist/sections?projectId=${projectId}`);
     if (!res.ok) throw new Error('Falha ao buscar seções do Todoist.');
-    const data = await res.json();
+    const text = await res.text();
+    const data = text && text.trim() ? JSON.parse(text) : {};
     return data.success && Array.isArray(data.sections) ? data.sections : [];
   } catch (err) {
     console.error('[Todoist Service] Error fetching sections:', err);
@@ -120,7 +122,8 @@ export async function fetchTodoistCollaborators(projectId: string): Promise<any[
   try {
     const res = await fetch(`/api/todoist/collaborators?projectId=${projectId}`);
     if (!res.ok) throw new Error('Falha ao buscar colaboradores do Todoist.');
-    const data = await res.json();
+    const text = await res.text();
+    const data = text && text.trim() ? JSON.parse(text) : {};
     return data.success && Array.isArray(data.collaborators) ? data.collaborators : [];
   } catch (err) {
     console.error('[Todoist Service] Error fetching collaborators:', err);

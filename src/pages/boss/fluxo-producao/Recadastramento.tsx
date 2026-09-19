@@ -205,7 +205,13 @@ export default function Recadastramento() {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Falha na resposta do serviço de busca do Google Drive.');
-      const data = await res.json();
+      const text = await res.text();
+      let data: any = {};
+      try {
+        data = text && text.trim() ? JSON.parse(text) : {};
+      } catch {
+        data = {};
+      }
       if (data.files) {
         setDriveResults(data.files);
         addLog(

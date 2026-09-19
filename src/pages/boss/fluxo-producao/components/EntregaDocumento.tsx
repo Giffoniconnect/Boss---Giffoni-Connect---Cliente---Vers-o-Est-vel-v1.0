@@ -138,8 +138,11 @@ export default function EntregaDocumento({
       try {
         const res = await fetch('/api/whatsapp/diagnostics');
         if (res.ok) {
-          const data = await res.json();
-          setWaDiagnostics(data);
+          const text = await res.text();
+          if (text && text.trim()) {
+            const data = JSON.parse(text);
+            setWaDiagnostics(data);
+          }
         }
       } catch (err) {
         console.warn('Failed to fetch WA diagnostics:', err);
@@ -527,15 +530,21 @@ export default function EntregaDocumento({
           googleAccessToken: resolvedGoogleAccessToken
         })
       });
+      const text = await response.text();
+      let data: any = {};
+      try {
+        data = text && text.trim() ? JSON.parse(text) : {};
+      } catch {
+        data = { success: false, errorMessage: text || 'Resposta inesperada' };
+      }
       if (response.ok) {
-        const data = await response.json();
         setPreflightData(data);
         // Clear previous error if it was a token expiration and preflight succeeds now
         if (whatsappResult && whatsappResult.errorCode === 'GOOGLE_DOCS_TOKEN_EXPIRED') {
           setWhatsappResult(null);
         }
       } else {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = data;
         setWhatsappResult({
           success: false,
           message: errorData.errorMessage || "Falha na verificação prévia do documento.",
@@ -572,11 +581,17 @@ export default function EntregaDocumento({
           message: `Giffoni Advogados — Este é um teste real para validar a comunicação e roteamento correto do WhatsApp com a sua linha telefônica.`
         })
       });
+      const testText = await response.text();
+      let data: any = {};
+      try {
+        data = testText && testText.trim() ? JSON.parse(testText) : {};
+      } catch {
+        data = { attempts: [] };
+      }
       if (response.ok) {
-        const data = await response.json();
         setTestFormatsResult(data.attempts || []);
       } else {
-        const err = await response.json().catch(() => ({}));
+        const err = data;
         alert("Erro ao disparar teste técnico de envio: " + (err.errorMessage || "Falha desconhecida."));
       }
     } catch (e: any) {
@@ -804,7 +819,13 @@ export default function EntregaDocumento({
           tipoPessoa
         })
       });
-      const data = await response.json();
+      const draftText = await response.text();
+      let data: any = {};
+      try {
+        data = draftText && draftText.trim() ? JSON.parse(draftText) : {};
+      } catch {
+        data = { success: false, errorMessage: draftText || 'Erro ao processar resposta' };
+      }
       if (response.ok && data.success) {
         const urls = data.gmailOpenUrls;
         const openUrl = urls?.composeInDraftsByMessageId || urls?.composeByDraftId || urls?.composeByMessageId || urls?.draftById || urls?.draftByMessageId || urls?.inboxThread;

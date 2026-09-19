@@ -271,7 +271,13 @@ export default function EstruturacaoStep({ caseId, onNext, onSetLoading, onAlert
       });
 
       if (!response.ok) throw new Error('Falha de resposta do servidor.');
-      const data = await response.json();
+      const resText = await response.text();
+      let data: any = {};
+      try {
+        data = resText && resText.trim() ? JSON.parse(resText) : {};
+      } catch {
+        data = {};
+      }
       setGeminiText(data.text);
       onAlert('Análise estrutural processada com sucesso pelo Gemini!');
     } catch (e: any) {

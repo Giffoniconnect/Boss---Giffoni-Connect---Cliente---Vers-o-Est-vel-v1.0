@@ -116,7 +116,13 @@ export default function GoogleDriveIntegration() {
         throw new Error(errText || `Erro HTTP ${response.status}`);
       }
 
-      const data = await response.json();
+      const resText = await response.text();
+      let data: any = {};
+      try {
+        data = resText && resText.trim() ? JSON.parse(resText) : {};
+      } catch {
+        data = { isValid: false, message: resText || 'Resposta inesperada' };
+      }
       if (data.isValid) {
         setUrlValidationState({
           status: 'success',
@@ -242,7 +248,13 @@ export default function GoogleDriveIntegration() {
       });
 
       if (valRes.ok) {
-        const valData = await valRes.json();
+        const valText = await valRes.text();
+        let valData: any = {};
+        try {
+          valData = valText && valText.trim() ? JSON.parse(valText) : {};
+        } catch {
+          valData = { isValid: false, message: valText || 'Resposta inesperada' };
+        }
         if (!valData.isValid) {
           setUrlValidationState({
             status: 'error',

@@ -89,15 +89,21 @@ export default function AudienciasFluxo() {
         })
       });
 
+      const conflictText = await conflictRes.text();
+      let conflictData: any = {};
+      try {
+        conflictData = conflictText && conflictText.trim() ? JSON.parse(conflictText) : {};
+      } catch {
+        conflictData = { error: conflictText || 'Resposta inesperada' };
+      }
+
       if (!conflictRes.ok) {
-        const errData = await conflictRes.json();
-        addLog(`Erro técnico na validação de conflitos: ${errData.error}`);
-        setError(errData.error || 'Erro ao consultar conflitos.');
+        addLog(`Erro técnico na validação de conflitos: ${conflictData.error}`);
+        setError(conflictData.error || 'Erro ao consultar conflitos.');
         setCheckingCalendar(false);
         return;
       }
 
-      const conflictData = await conflictRes.json();
       setCalendarConfigStatus('ativo');
       addLog('Integração com Google Calendar ativa na base de dados Firestore.');
       addLog(`Calendário utilizado: ${conflictData.calendarId}`);
@@ -156,15 +162,21 @@ export default function AudienciasFluxo() {
         })
       });
 
+      const createText = await createRes.text();
+      let eventData: any = {};
+      try {
+        eventData = createText && createText.trim() ? JSON.parse(createText) : {};
+      } catch {
+        eventData = { error: createText || 'Resposta inesperada' };
+      }
+
       if (!createRes.ok) {
-        const errData = await createRes.json();
-        addLog(`Erro técnico ao registrar evento no Google Calendar: ${errData.error}`);
-        setError(errData.error || 'Erro ao criar evento.');
+        addLog(`Erro técnico ao registrar evento no Google Calendar: ${eventData.error}`);
+        setError(eventData.error || 'Erro ao criar evento.');
         setCheckingCalendar(false);
         return;
       }
 
-      const eventData = await createRes.json();
       setGoogleEvent(eventData);
       addLog(`Sucesso! Evento criado com ID ${eventData.eventId}`);
       addLog(`Link gerado: ${eventData.htmlLink}`);

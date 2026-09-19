@@ -204,7 +204,13 @@ export default function EditarPortalCliente() {
     setSyncingProjects(true);
     try {
       const response = await fetch('/api/todoist/projects');
-      const data = await response.json();
+      const text = await response.text();
+      let data: any = {};
+      try {
+        data = text && text.trim() ? JSON.parse(text) : {};
+      } catch {
+        data = { success: false };
+      }
       if (data.success && Array.isArray(data.projects)) {
         setSyncedProjectsList(data.projects);
       }
@@ -243,7 +249,13 @@ export default function EditarPortalCliente() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(bodyPayload)
       });
-      const data = await response.json();
+      const text = await response.text();
+      let data: any = {};
+      try {
+        data = text && text.trim() ? JSON.parse(text) : {};
+      } catch {
+        data = { success: false, errorMessage: text || 'Erro ao criar tarefa' };
+      }
       
       if (data.success === true && data.todoistTaskId) {
         setTodoistAutomationStatus('criado');

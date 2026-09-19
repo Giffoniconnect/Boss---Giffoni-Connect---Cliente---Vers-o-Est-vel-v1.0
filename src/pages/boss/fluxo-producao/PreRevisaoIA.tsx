@@ -199,7 +199,13 @@ export default function PreRevisaoIA() {
         body: JSON.stringify({ caseDetails })
       });
 
-      const data = await res.json();
+      const resText = await res.text();
+      let data: any = {};
+      try {
+        data = resText && resText.trim() ? JSON.parse(resText) : {};
+      } catch {
+        data = { message: resText || "Erro ao comunicar com motor cognitivo Gemini." };
+      }
 
       if (!res.ok) {
         // If error is key missing or technical

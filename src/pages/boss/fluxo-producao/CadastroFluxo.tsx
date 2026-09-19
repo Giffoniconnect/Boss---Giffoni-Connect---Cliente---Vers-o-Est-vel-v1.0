@@ -87,7 +87,7 @@ export default function CadastroFluxo() {
         statusPublicoCliente: "Aguardando definição",
         visibleToClient: true,
         productionStatus: "em_producao",
-        productionStage: "dados-caso",
+        productionStage: "onboarding",
         caseLifecycle: "edrp",
         isNovoCaso: false,
         createdAt: now,
@@ -110,6 +110,7 @@ export default function CadastroFluxo() {
         statusPublicoCliente: "Aguardando definição",
         visibleToClient: true,
         productionStatus: "em_producao",
+        productionStage: "onboarding",
         createdAt: now,
         updatedAt: now,
         gdriveFolderId: finalFolderId || '',
@@ -140,7 +141,7 @@ export default function CadastroFluxo() {
         }
       }
 
-      navigate(`/boss-giffoni-clientes/fluxo-producao/${autoCaseId}/dados-caso`);
+      navigate(`/boss-giffoni-clientes/fluxo-producao/${autoCaseId}/onboarding`);
     } catch (err: any) {
       console.error("Erro ao criar rascunho de caso:", err);
       setError(`Erro ao criar rascunho de caso: ${err.message || err}`);
@@ -325,7 +326,8 @@ export default function CadastroFluxo() {
     if (cleanCep.length === 8) {
       try {
         const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
-        const data = await res.json();
+        const text = await res.text();
+        const data = text && text.trim() ? JSON.parse(text) : {};
         if (!data.erro) {
           setProcuradorData(prev => ({
             ...prev,
@@ -1334,11 +1336,12 @@ export default function CadastroFluxo() {
   };
 
   const handleContinueCase = (c: any) => {
-    const routeStage = c.productionStage || 'dados-caso';
+    const routeStage = c.productionStage || 'onboarding';
     
-    let pagePath = 'dados-caso';
+    let pagePath = 'onboarding';
     const s = routeStage.toLowerCase();
-    if (s === 'dados-caso' || s === 'dadoscaso') pagePath = 'dados-caso';
+    if (s === 'onboarding') pagePath = 'onboarding';
+    else if (s === 'dados-caso' || s === 'dadoscaso') pagePath = 'dados-caso';
     else if (s === 'solicitacoes-informacoes' || s === 'solicitacoessextra' || s === 'solicitacoesinformacoes') pagePath = 'solicitacoes-informacoes';
     else if (s === 'solicitacoes-provas' || s === 'solicitacoesprovas') pagePath = 'solicitacoes-provas';
     else if (s === 'financeiro') pagePath = 'financeiro';
@@ -2196,7 +2199,7 @@ export default function CadastroFluxo() {
                       ) : (
                         <>
                           <ShieldCheck size={14} />
-                          <span>Criar Portal do Cliente e Prosseguir</span>
+                          <span>Salvar e Continuar</span>
                           <ArrowRight size={14} />
                         </>
                       )}

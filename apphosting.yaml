@@ -1,0 +1,6 @@
+# Firebase App Hosting Configuration
+env:
+  - variable: Wascript_API
+    secret: Wascript_API
+    availability:
+      - RUNTIME

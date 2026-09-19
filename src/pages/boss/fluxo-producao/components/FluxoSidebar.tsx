@@ -127,6 +127,78 @@ export function resolveCurrentStepIndex({
     });
   });
 
+  // Fallback inteligente para sub-rotas ou aliases caso nenhuma rota exata tenha correspondido
+  if (bestIndex === -1) {
+    const p = normPath.toLowerCase();
+    let fallbackId = '';
+    if (
+      p.includes('onboarding') ||
+      p.includes('welcome.zap') ||
+      p.includes('add.telefone') ||
+      p.includes('add.cliente') ||
+      p.includes('enviar.email') ||
+      p.includes('avaliacard') ||
+      p.includes('auditoria.onboarding')
+    ) {
+      fallbackId = 'onboarding';
+    } else if (p.includes('cadastro') || p.includes('cadastrar')) {
+      fallbackId = 'cadastro';
+    } else if (p.includes('dados-caso')) {
+      fallbackId = 'dados-caso';
+    } else if (p.includes('tipo-producao')) {
+      fallbackId = 'tipo-producao';
+    } else if (p.includes('financeiro')) {
+      fallbackId = 'financeiro';
+    } else if (
+      p.includes('card-iniciar-coleta') ||
+      p.includes('procuracao') ||
+      p.includes('declaracao') ||
+      p.includes('contrato') ||
+      p.includes('documentos')
+    ) {
+      fallbackId = 'solicitacoes-provas';
+    } else if (p.includes('digitalizacao-upload')) {
+      fallbackId = 'digitalizacao-upload';
+    } else if (p.includes('edrp')) {
+      fallbackId = 'edrp';
+    } else if (p.includes('pre-peticionamento')) {
+      fallbackId = 'pre-peticionamento-ia';
+    } else if (p.includes('delegacao')) {
+      fallbackId = 'delegacao';
+    } else if (p.includes('revisao')) {
+      fallbackId = 'revisao';
+    } else if (p.includes('solicitacoes-informacoes')) {
+      fallbackId = 'solicitacoes-informacoes';
+    } else if (p.includes('solicitacoes-provas')) {
+      fallbackId = 'solicitacoes-provas-adicionais';
+    } else if (p.includes('compliance')) {
+      fallbackId = 'compliance';
+    } else if (p.includes('protocolo')) {
+      fallbackId = 'protocolo';
+    } else if (p.includes('controladoria')) {
+      fallbackId = 'controladoria';
+    } else if (p.includes('prazos')) {
+      fallbackId = 'prazos';
+    } else if (p.includes('audiencias') || p.includes('agendar-audiencias')) {
+      fallbackId = 'agendar-audiencias';
+    } else if (p.includes('pericia') || p.includes('agendar-pericia')) {
+      fallbackId = 'agendar-pericia';
+    } else if (p.includes('relatorio-integridade')) {
+      fallbackId = 'relatorio-integridade';
+    } else if (p.includes('arquivamento')) {
+      fallbackId = 'arquivamento';
+    }
+
+    if (fallbackId) {
+      const foundIdx = activeSteps.findIndex((s) => s.id === fallbackId);
+      if (foundIdx !== -1) {
+        bestIndex = foundIdx;
+        bestMatchType = 'alias';
+        bestMatchedRoute = normPath;
+      }
+    }
+  }
+
   return { index: bestIndex, matchType: bestMatchType, matchedRoute: bestMatchedRoute };
 }
 
@@ -233,6 +305,31 @@ export default function FluxoSidebar({ caseId }: FluxoSidebarProps) {
   }, [activeSteps, caseId, location.pathname]);
 
   const currentIndex = resolution.index;
+  const currentStep = currentIndex !== -1 ? activeSteps[currentIndex] : null;
+
+  // Nome formatado e preciso da etapa atual (e subetapa se houver)
+  const currentStepDisplay = useMemo(() => {
+    if (!currentStep || currentIndex === -1) return 'Etapa não identificada';
+
+    const p = location.pathname.toLowerCase();
+    let subetapa = '';
+    if (currentStep.id === 'onboarding') {
+      if (p.includes('welcome.zap')) subetapa = 'Boas-vindas W.A Speed';
+      else if (p.includes('add.telefone')) subetapa = 'Adicionar Telefone';
+      else if (p.includes('instagram')) subetapa = 'Instagram';
+      else if (p.includes('facebook')) subetapa = 'Facebook';
+      else if (p.includes('tiktok')) subetapa = 'TikTok';
+      else if (p.includes('enviar.email')) subetapa = 'Email Boas-vindas';
+      else if (p.includes('avaliacard')) subetapa = 'Avaliacard';
+      else if (p.includes('auditoria')) subetapa = 'Auditoria Onboarding';
+    }
+
+    const stepNumber = `Etapa ${currentIndex + 1} de ${activeSteps.length}`;
+    if (subetapa) {
+      return `${stepNumber}: ${currentStep.label} (${subetapa})`;
+    }
+    return `${stepNumber}: ${currentStep.label}`;
+  }, [currentStep, currentIndex, activeSteps.length, location.pathname]);
 
   // Measure real, functional step completeness mapping in compliance with Obstáculo 1 & 6
   const getStepStatus = (stepId: string): 'complete' | 'incomplete' | 'uninitiated' => {
@@ -483,13 +580,16 @@ export default function FluxoSidebar({ caseId }: FluxoSidebarProps) {
 
           {/* PROGRESS METRIC BLOCK */}
           <div className="flex flex-col gap-1 shrink-0 self-start md:self-auto">
-            <div className="flex items-center gap-4 bg-gray-50/55 border border-gray-100 px-4 py-2 rounded-2xl shrink-0 h-[44px]">
+            <div className="flex items-center gap-4 bg-gray-50/55 border border-gray-100 px-4 py-2 rounded-2xl shrink-0 min-h-[44px]">
               <div className="text-left">
                 <span className="text-[10px] md:text-[11px] font-black uppercase text-gray-400 block tracking-widest leading-none">
                   Avanço Administrativo
                 </span>
-                <span className="text-[11px] md:text-xs font-black text-gray-900 block mt-1">
-                  {currentIndex !== -1 ? `Etapa ${currentIndex + 1} de ${activeSteps.length}` : 'Etapa não identificada'}
+                <span 
+                  className="text-[11px] md:text-xs font-black text-gray-900 block mt-1 truncate max-w-[260px] md:max-w-[400px]"
+                  title={currentStepDisplay}
+                >
+                  {currentStepDisplay}
                 </span>
               </div>
 

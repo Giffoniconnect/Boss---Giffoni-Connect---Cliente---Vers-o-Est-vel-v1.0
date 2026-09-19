@@ -563,7 +563,8 @@ export const EventsManager: React.FC<EventsManagerProps> = ({
         })
       });
       if (res.ok) {
-        const data = await res.json();
+        const text = await res.text();
+        const data = text && text.trim() ? JSON.parse(text) : {};
         return { status: 'success', data };
       } else {
         return { status: 'error' };

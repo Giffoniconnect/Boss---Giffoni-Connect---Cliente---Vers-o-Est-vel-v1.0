@@ -92,7 +92,13 @@ export function DirectReferralFields({
         })
       });
 
-      const data = await res.json();
+      const text = await res.text();
+      let data: any = {};
+      try {
+        data = text && text.trim() ? JSON.parse(text) : {};
+      } catch {
+        data = { success: false, errorMessage: text || 'Erro inesperado' };
+      }
 
       if (res.ok && data.success) {
         setSendingStatus('success');

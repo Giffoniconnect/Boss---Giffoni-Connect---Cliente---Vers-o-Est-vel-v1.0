@@ -284,8 +284,14 @@ export default function Configuracoes() {
     setLoadingGoogleStatus(true);
     try {
       const res = await fetch('/api/integrations/status');
+      const text = await res.text();
+      let data: any = {};
+      try {
+        data = text && text.trim() ? JSON.parse(text) : {};
+      } catch {
+        data = {};
+      }
       if (res.ok) {
-        const data = await res.json();
         setGoogleStatus(data);
       } else {
         setGoogleStatus({ connected: false });
@@ -305,11 +311,17 @@ export default function Configuracoes() {
     setSaving(true);
     try {
       const res = await fetch('/api/integrations/google/disconnect', { method: 'POST' });
+      const text = await res.text();
+      let errData: any = {};
+      try {
+        errData = text && text.trim() ? JSON.parse(text) : {};
+      } catch {
+        errData = { error: text || 'Erro desconhecido' };
+      }
       if (res.ok) {
         setFeedback({ type: 'success', message: 'Google Workspace desconectado com sucesso.' });
         fetchGoogleStatus();
       } else {
-        const errData = await res.json();
         setFeedback({ type: 'error', message: errData.error || 'Erro ao desconectar Google Workspace.' });
       }
     } catch (err: any) {
@@ -725,7 +737,13 @@ export default function Configuracoes() {
         })
       });
 
-      const data = await resp.json();
+      const respText = await resp.text();
+      let data: any = {};
+      try {
+        data = respText && respText.trim() ? JSON.parse(respText) : {};
+      } catch {
+        data = { error: respText || 'Erro inesperado' };
+      }
       const timestamp = new Date().toLocaleTimeString();
 
       const lastEndpoint = data.endpoint || `${gapiBaseUrl}/api/webhook/gdi-job`;
@@ -954,7 +972,13 @@ export default function Configuracoes() {
           })
         });
         
-        const proxyData = await proxyResp.json();
+        const proxyText = await proxyResp.text();
+        let proxyData: any = {};
+        try {
+          proxyData = proxyText && proxyText.trim() ? JSON.parse(proxyText) : {};
+        } catch {
+          proxyData = { error: proxyText || 'Erro inesperado' };
+        }
         responseStatus = proxyData.status || proxyResp.status;
         isSuccess = proxyData.success === true;
         

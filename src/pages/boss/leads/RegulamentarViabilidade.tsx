@@ -354,7 +354,13 @@ export default function RegulamentarViabilidade() {
         throw new Error(errText || 'Falha na resposta do servidor.');
       }
 
-      const data = await response.json();
+      const resText = await response.text();
+      let data: any = {};
+      try {
+        data = resText && resText.trim() ? JSON.parse(resText) : {};
+      } catch {
+        data = {};
+      }
       setOpinionText(data.text || '');
     } catch (err: any) {
       console.error(err);

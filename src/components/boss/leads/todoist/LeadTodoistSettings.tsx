@@ -127,7 +127,13 @@ export const LeadTodoistSettings: React.FC<LeadTodoistSettingsProps> = ({
 
     try {
       const res = await fetch('/api/todoist/diagnostics');
-      const data = await res.json();
+      const text = await res.text();
+      let data: any = {};
+      try {
+        data = text && text.trim() ? JSON.parse(text) : {};
+      } catch {
+        data = { success: false };
+      }
       
       if (!data.success || !data.tokenConfigured) {
         throw new Error('Chave de API do Todoist (TODOIST_API_TOKEN) não configurada no ambiente.');

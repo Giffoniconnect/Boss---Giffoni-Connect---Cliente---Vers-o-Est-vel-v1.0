@@ -131,7 +131,13 @@ export default function AsaasIntegration() {
         if (billingContextId) {
           // BILLING MODE: Fetch client and case context from backend
           const res = await fetch(`/api/asaas/context/resolve?caseId=${encodeURIComponent(billingContextId)}`);
-          const data = await res.json();
+          const text = await res.text();
+          let data: any = {};
+          try {
+            data = text && text.trim() ? JSON.parse(text) : {};
+          } catch {
+            data = {};
+          }
           if (res.ok && data.success) {
             setBossContext(data.context);
             // Pre-populate fields from caseFinancials if available
@@ -185,7 +191,13 @@ export default function AsaasIntegration() {
     try {
       setLoadingHistory(true);
       const res = await fetch(`/api/asaas/contracts/history?caseId=${encodeURIComponent(billingContextId)}`);
-      const data = await res.json();
+      const text = await res.text();
+      let data: any = {};
+      try {
+        data = text && text.trim() ? JSON.parse(text) : {};
+      } catch {
+        data = {};
+      }
       if (res.ok && data.success) {
         setPastContracts(data.contracts || []);
       }
@@ -312,7 +324,13 @@ export default function AsaasIntegration() {
         }),
       });
 
-      const data = await response.json();
+      const text = await response.text();
+      let data: any = {};
+      try {
+        data = text && text.trim() ? JSON.parse(text) : {};
+      } catch {
+        data = { success: false, error: text || 'Erro inesperado' };
+      }
 
       if (!response.ok || !data.success) {
         setCurrentStepStatus('FAILED');
@@ -343,7 +361,13 @@ export default function AsaasIntegration() {
         }),
       });
 
-      const data = await res.json();
+      const text = await res.text();
+      let data: any = {};
+      try {
+        data = text && text.trim() ? JSON.parse(text) : {};
+      } catch {
+        data = { success: false, error: text || 'Erro inesperado' };
+      }
       if (res.ok && data.success) {
         // If retried from active orchestration result
         if (orchestratorResult && orchestratorResult.operation.externalReference === externalRef) {

@@ -148,7 +148,8 @@ export default function CaseEventsPanel({ caseId, clientId, isAdmin = false, fil
         });
 
         if (res.ok) {
-          const resData = await res.json();
+          const text = await res.text();
+          const resData = text && text.trim() ? JSON.parse(text) : {};
           createdGoogleEventId = resData.id;
           setSyncStatus('Sincronizado com sucesso!');
         } else {

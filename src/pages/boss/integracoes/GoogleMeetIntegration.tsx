@@ -65,7 +65,8 @@ export default function GoogleMeetIntegration() {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
       if (res.ok) {
-        const data = await res.json();
+        const text = await res.text();
+        const data = text && text.trim() ? JSON.parse(text) : {};
         const items = data.items || [];
         // Filter events that have hangoutsMeet entryPoints
         const meetsList = items.filter((ev: any) => {
@@ -273,7 +274,8 @@ export default function GoogleMeetIntegration() {
         throw new Error(`Erro ao gerar Google Meet: ${res.statusText} (${res.status})`);
       }
 
-      const event = await res.json();
+      const eventText = await res.text();
+      const event = eventText && eventText.trim() ? JSON.parse(eventText) : {};
       const entryPoints = event.conferenceData?.entryPoints || [];
       const videoEntryPoint = entryPoints.find((ep: any) => ep.entryPointType === 'video');
       const meetUrl = videoEntryPoint?.uri || null;

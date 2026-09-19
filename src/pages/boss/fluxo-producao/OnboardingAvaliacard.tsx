@@ -159,7 +159,13 @@ export default function OnboardingAvaliacard() {
         })
       });
 
-      const data = await response.json();
+      const text = await response.text();
+      let data: any = {};
+      try {
+        data = text && text.trim() ? JSON.parse(text) : {};
+      } catch {
+        data = { success: false, errorMessage: text || 'Resposta inesperada do servidor' };
+      }
 
       if (!response.ok || !data.success) {
         throw new Error(data.errorMessage || 'Falha ao enviar mensagem via W.A Speed.');
@@ -243,7 +249,13 @@ export default function OnboardingAvaliacard() {
         })
       });
 
-      const data = await response.json();
+      const text = await response.text();
+      let data: any = {};
+      try {
+        data = text && text.trim() ? JSON.parse(text) : {};
+      } catch {
+        data = { success: false, errorMessage: text || 'Resposta inesperada do servidor' };
+      }
 
       if (!response.ok || !data.success) {
         throw new Error(data.errorMessage || 'Falha ao enviar e-mail via Gmail.');

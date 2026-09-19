@@ -70,15 +70,18 @@ export async function requestAsaas<T>(
 
     if (!response.ok) {
       let errDetails = "";
+      const errText = await response.text();
       try {
-        const errJson = await response.json();
+        const errJson = errText && errText.trim() ? JSON.parse(errText) : {};
         if (errJson.errors && Array.isArray(errJson.errors)) {
           errDetails = errJson.errors.map((e: any) => e.description).join(", ");
-        } else {
+        } else if (Object.keys(errJson).length > 0) {
           errDetails = JSON.stringify(errJson);
+        } else {
+          errDetails = errText;
         }
       } catch {
-        errDetails = await response.text();
+        errDetails = errText;
       }
       
       const errMsg = `ASAAS API Error [Status ${response.status}]: ${errDetails}`;
@@ -93,7 +96,13 @@ export async function requestAsaas<T>(
       return buffer as any;
     }
 
-    const json = await response.json();
+    const resText = await response.text();
+    let json: any = {};
+    try {
+      json = resText && resText.trim() ? JSON.parse(resText) : {};
+    } catch {
+      json = { success: false, raw: resText };
+    }
     return json as T;
   } catch (error: any) {
     SafeLogger.error(`Failed during ASAAS HTTP REQUEST [${method}] to path: ${path}`, error);
